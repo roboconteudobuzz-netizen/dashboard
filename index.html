@@ -7,16 +7,14 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #F7F5F0;
-    --surface: #c64949;
+    --bg: #F5F5F3;
+    --surface: #FFFFFF;
     --ink: #1A1A18;
     --ink2: #6B6860;
     --ink3: #A8A69F;
-    --accent: #E8593C;
-    --accent2: #2D6A4F;
-    --accent3: #457B9D;
-    --border: rgba(26,26,24,0.08);
-    --radius: 14px;
+    --accent: #1A1A18;
+    --border: rgba(26,26,24,0.06);
+    --radius: 12px;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,47 +40,19 @@
   }
   .header-left h1 {
     font-family: 'DM Serif Display', serif;
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 400;
     letter-spacing: -0.5px;
     line-height: 1.1;
   }
-  .header-left h1 em {
-    font-style: italic;
-    color: #F4A261;
-  }
+  .header-left h1 em { font-style: italic; color: rgba(255,255,255,0.5); }
   .header-sub {
-    font-size: 13px;
-    color: rgba(255,255,255,0.45);
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
     margin-top: 6px;
     font-weight: 300;
   }
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .badge-live {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-size: 12px;
-    font-weight: 500;
-    color: rgba(255,255,255,0.75);
-  }
-  .badge-live::before {
-    content: '';
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: #4ade80;
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-
+  .header-right { display: flex; align-items: center; gap: 10px; }
   .month-select {
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(255,255,255,0.15);
@@ -99,58 +69,220 @@
   /* ── LAYOUT ── */
   .main { padding: 32px 40px 48px; max-width: 1100px; margin: 0 auto; }
 
-  /* ── KPI GRID ── */
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 12px;
+    padding-left: 2px;
+  }
+
+  /* ── KPI GRID (Bloco 1) ── */
   .kpi-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0,1fr));
-    gap: 14px;
-    margin-bottom: 28px;
+    gap: 12px;
+    margin-bottom: 32px;
   }
   .kpi-card {
     background: var(--surface);
     border-radius: var(--radius);
-    border: 1px solid var(--border);
     padding: 20px 22px 18px;
-    position: relative;
-    overflow: hidden;
     transition: transform .15s;
   }
   .kpi-card:hover { transform: translateY(-2px); }
-  .kpi-card::after {
-    content: '';
-    position: absolute;
-    left: 0; top: 0;
-    width: 3px; height: 100%;
-    border-radius: 14px 0 0 14px;
-  }
-  .kpi-card.accent1::after { background: var(--accent); }
-  .kpi-card.accent2::after { background: var(--accent2); }
-  .kpi-card.accent3::after { background: var(--accent3); }
-  .kpi-card.accent4::after { background: #9B59B6; }
   .kpi-label {
     font-size: 11px;
     font-weight: 500;
-    font-family: 'Courier New', Courier, monospace;
-    letter-spacing: .07em;
+    letter-spacing: .06em;
     text-transform: uppercase;
     color: var(--ink3);
     margin-bottom: 10px;
   }
   .kpi-value {
     font-family: 'DM Serif Display', serif;
-    font-size: 36px;
+    font-size: 32px;
     line-height: 1;
     color: var(--ink);
     letter-spacing: -1px;
   }
-  .kpi-delta {
-    font-size: 12px;
-    margin-top: 8px;
-    font-weight: 400;
+  .kpi-sub {
+    font-size: 11px;
+    margin-top: 6px;
+    color: var(--ink3);
+    font-weight: 300;
   }
-  .kpi-delta.up { color: var(--accent2); }
-  .kpi-delta.dn { color: var(--accent); }
-  .kpi-delta.neutral { color: var(--ink3); }
+
+  /* ── INTERACT GRID (Bloco 2) ── */
+  .interact-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0,1fr));
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+  .interact-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px 12px;
+    text-align: center;
+  }
+  .interact-val {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .interact-lbl {
+    font-size: 10px;
+    color: var(--ink3);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-top: 6px;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 22px 24px 20px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 18px;
+  }
+
+  /* ── QUALITY GRID (Bloco 3) ── */
+  .quality-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 10px;
+  }
+  .quality-item {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .quality-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink3);
+    margin-bottom: 8px;
+  }
+  .quality-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    color: var(--ink);
+  }
+  .quality-sub {
+    font-size: 10px;
+    color: var(--ink3);
+    margin-top: 4px;
+  }
+
+  /* ── PERFORMANCE ROW ── */
+  .perf-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .perf-row:last-child { border-bottom: none; }
+  .perf-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .perf-name { flex: 1; font-weight: 500; color: var(--ink); }
+  .perf-stat { font-size: 12px; color: var(--ink2); min-width: 70px; text-align: right; }
+  .perf-stat strong { color: var(--ink); font-weight: 500; }
+
+  /* ── RANKING ── */
+  .ranking { display: flex; flex-direction: column; gap: 8px; }
+  .rank-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 12px 16px;
+    transition: transform .15s;
+  }
+  .rank-card:hover { transform: translateX(2px); }
+  .rank-pos {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--ink3);
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .rank-info { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
+  .rank-thumb { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--border); }
+  .rank-thumb-placeholder { width: 42px; height: 42px; border-radius: 8px; background: var(--border); flex-shrink: 0; }
+  .rank-text { flex: 1; min-width: 0; }
+  .rank-id { font-size: 13px; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+  .rank-plat { font-size: 11px; color: var(--ink3); margin-top: 1px; }
+  .rank-stats { display: flex; gap: 16px; flex-shrink: 0; }
+  .rank-stat { text-align: right; }
+  .rank-stat-val { font-family: 'DM Serif Display', serif; font-size: 16px; color: var(--ink); line-height: 1; }
+  .rank-stat-lbl { font-size: 9px; color: var(--ink3); letter-spacing: .05em; text-transform: uppercase; margin-top: 2px; }
+
+  /* ── TOP POSTS TABS ── */
+  .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab-btn {
+    background: var(--bg);
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink3);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    transition: all .15s;
+  }
+  .tab-btn.active { background: var(--ink); color: #fff; }
+  .tab-btn:hover:not(.active) { background: #E8E7E3; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── AUDIENCE ── */
+  .audience-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 0.9fr 1.1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .audience-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink3);
+    margin-bottom: 12px;
+  }
+
+  /* ── CHIP ── */
+  .chip {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .chip-ig { background: #F3E8E4; color: #8B3A1A; }
+  .chip-tt { background: #E8E4F0; color: #4527A0; }
+  .chip-li { background: #E2EBF0; color: #1A4E72; }
+  .chip-fb { background: #E4E8F0; color: #1A3A72; }
 
   /* ── LOADING ── */
   .loading {
@@ -160,150 +292,16 @@
     gap: 10px;
     padding: 60px 0;
     color: var(--ink3);
-    font-size: 14px;
+    font-size: 13px;
   }
   .spinner {
-    width: 18px; height: 18px;
+    width: 16px; height: 16px;
     border: 2px solid var(--border);
     border-top-color: var(--ink2);
     border-radius: 50%;
     animation: spin .7s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── CHARTS GRID ── */
-  .charts-grid {
-    display: grid;
-    grid-template-columns: minmax(0,1.55fr) minmax(0,1fr);
-    gap: 14px;
-    margin-bottom: 28px;
-  }
-
-  /* ── CARD ── */
-  .card {
-    background: var(--surface);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    padding: 22px 24px 20px;
-  }
-  .card-title {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: .07em;
-    text-transform: uppercase;
-    color: var(--ink3);
-    margin-bottom: 20px;
-  }
-
-  /* ── BAR CHART ── */
-  .bar-chart { display: flex; flex-direction: column; gap: 10px; }
-  .bar-row { display: flex; align-items: center; gap: 10px; }
-  .bar-lbl { font-size: 12px; color: var(--ink2); width: 80px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bar-track { flex: 1; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 3px; transition: width .6s cubic-bezier(.4,0,.2,1); }
-  .bar-val { font-size: 12px; font-weight: 500; color: var(--ink); width: 40px; text-align: right; flex-shrink: 0; }
-
-  /* ── DONUT ── */
-  .donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-  .donut-legend { width: 100%; display: flex; flex-direction: column; gap: 7px; }
-  .leg-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink2); }
-  .leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .leg-pct { margin-left: auto; font-weight: 500; color: var(--ink); font-size: 13px; }
-
-  /* ── POSTS TABLE ── */
-  .posts-header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    margin-bottom: 16px;
-  }
-  .posts-count {
-    font-size: 12px;
-    color: var(--ink3);
-  }
-  .posts-table { width: 100%; border-collapse: collapse; }
-  .posts-table th {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--ink3);
-    padding: 0 12px 10px 0;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-  }
-  .posts-table td {
-    font-size: 13px;
-    color: var(--ink2);
-    padding: 11px 12px 11px 0;
-    border-bottom: 1px solid var(--border);
-    vertical-align: middle;
-  }
-  .posts-table tr:last-child td { border-bottom: none; }
-  .posts-table tr:hover td { color: var(--ink); }
-  .post-link {
-    color: var(--ink);
-    font-weight: 500;
-    text-decoration: none;
-    font-size: 13px;
-  }
-  .post-link:hover { color: var(--accent); }
-  .chip {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 500;
-    padding: 3px 9px;
-    border-radius: 20px;
-  }
-  .chip-ig { background: #FDE8E4; color: #B5341A; }
-  .chip-tt { background: #E8E4F8; color: #4527A0; }
-  .chip-li { background: #E2EEF8; color: #1A4E72; }
-  .chip-fb { background: #E4EBF8; color: #1A3A72; }
-  .taxa { font-weight: 500; }
-  .taxa-good { color: var(--accent2); }
-  .taxa-mid  { color: #B7791F; }
-  .taxa-low  { color: var(--ink3); }
-
-  /* RANKING */
-  .ranking{display:flex;flex-direction:column;gap:10px}
-  .rank-card{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;transition:transform .15s}
-  .rank-card:hover{transform:translateX(3px)}
-  .rank-card.gold{border-left:3px solid #F4A233}
-  .rank-card.silver{border-left:3px solid #A0A0A8}
-  .rank-card.bronze{border-left:3px solid #C87941}
-  .rank-card.worst{border-left:3px solid #D96C6C}
-  .rank-card.neutral{border-left:3px solid var(--border)}
-
-  .interact-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:28px}
-  .interact-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;text-align:center}
-  .interact-icon{font-size:22px;margin-bottom:8px}
-  .interact-val{font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink);line-height:1}
-  .interact-lbl{font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-top:6px}
-  .medal{font-size:24px;width:36px;text-align:center;flex-shrink:0}
-  .rank-info{flex:1;min-width:0;display:flex;align-items:center;gap:12px}
-  .rank-thumb{width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--border)}
-  .rank-thumb-placeholder{width:48px;height:48px;border-radius:8px;background:var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--ink3)}
-  .rank-text{flex:1;min-width:0}
-  .rank-id{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
-  .rank-plat{font-size:11px;color:var(--ink3);margin-top:2px}
-  .post-thumb{width:36px;height:36px;border-radius:6px;object-fit:cover;vertical-align:middle;flex-shrink:0;background:var(--border)}
-  .rank-stats{display:flex;gap:20px;flex-shrink:0}
-  .rank-stat{text-align:right}
-  .rank-stat-val{font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink);line-height:1}
-  .rank-stat-lbl{font-size:10px;color:var(--ink3);letter-spacing:.05em;text-transform:uppercase;margin-top:2px}
-
-
-  /* ── FOOTER ── */
-  .footer {
-    margin-top: 36px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
-    color: var(--ink3);
-  }
 
   /* ── ERROR ── */
   .error-box {
@@ -315,11 +313,25 @@
     color: #991B1B;
   }
 
+  /* ── FOOTER ── */
+  .footer {
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--ink3);
+  }
+
   @media (max-width: 700px) {
     .header { padding: 20px 20px 18px; }
     .main { padding: 20px 20px 40px; }
     .kpi-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
-    .charts-grid { grid-template-columns: 1fr; }
+    .interact-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .quality-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .audience-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -332,7 +344,6 @@
   </div>
   <div class="header-right">
     <select class="month-select" id="month-select" onchange="loadDashboard()"></select>
-    <div class="badge-live">Ao vivo</div>
   </div>
 </div>
 
@@ -343,15 +354,11 @@
 </div>
 
 <script>
-// ─────────────────────────────────────────────
-// CONFIG — só o database ID aqui (tokens ficam no .env do servidor)
-// ─────────────────────────────────────────────
 const CONFIG = {
-  databaseId:    "6f5569db26af439d832d6d805aa63dc0",   // ID do banco Notion (sem secret)
+  databaseId: "6f5569db26af439d832d6d805aa63dc0",
   clientIdField: "ID CLIENTE",
 };
 
-// Mapeamento exato dos campos da screenshot
 const FIELDS = {
   idCliente:        "ID CLIENTE",
   alcance:          "Alcance",
@@ -382,18 +389,18 @@ const FIELDS = {
   temaCategoria:    "Tema/Categoria",
   ctaPost:          "CTA do post",
   novosSeguidor:    "Novos seguidores post",
+  reposts:          "Reposts",
+  seguidoresTotais: "Seguidores totais",
 };
 
-// ─────────────────────────────────────────────
-// Populando o select de meses
-// ─────────────────────────────────────────────
+// ── Meses ──
 function populateMonths() {
   const sel = document.getElementById('month-select');
   const months = [
     'Janeiro 2026','Fevereiro 2026','Março 2026','Abril 2026',
     'Maio 2026','Junho 2026','Julho 2026','Agosto 2026',
   ];
-  months.forEach((m,i) => {
+  months.forEach(m => {
     const o = document.createElement('option');
     o.value = m; o.textContent = m;
     if (m === 'Abril 2026') o.selected = true;
@@ -401,30 +408,22 @@ function populateMonths() {
   });
 }
 
-// ─────────────────────────────────────────────
-// Busca dados do Notion via API
-// ─────────────────────────────────────────────
+// ── Notion API ──
 async function fetchNotionData(mes) {
   const res = await fetch(`/api/notion`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       databaseId: CONFIG.databaseId,
-      filter: {
-        property: FIELDS.mesPostagem,
-        select: { equals: mes },
-      },
+      filter: { property: FIELDS.mesPostagem, select: { equals: mes } },
       page_size: 100,
     }),
   });
   if (!res.ok) throw new Error(`Notion API ${res.status}: ${await res.text()}`);
-  const data = await res.json();
-  return data.results;
+  return (await res.json()).results;
 }
 
-// ─────────────────────────────────────────────
-// Extrai valor de uma propriedade Notion
-// ─────────────────────────────────────────────
+// ── Extrair propriedade ──
 function prop(page, name) {
   const p = page.properties[name];
   if (!p) return null;
@@ -444,9 +443,7 @@ function prop(page, name) {
   }
 }
 
-// ─────────────────────────────────────────────
-// Agrega os dados por post
-// ─────────────────────────────────────────────
+// ── Agregação ──
 function aggregateData(pages) {
   const posts = pages.map(p => ({
     idCliente:        prop(p, FIELDS.idCliente),
@@ -471,27 +468,17 @@ function aggregateData(pages) {
     temaCategoria:    prop(p, FIELDS.temaCategoria) ?? '—',
     ctaPost:          prop(p, FIELDS.ctaPost) ?? '—',
     novosSeguidor:    prop(p, FIELDS.novosSeguidor) ?? 0,
+    reposts:          prop(p, FIELDS.reposts) ?? 0,
   })).map(p => ({
     ...p,
-    taxaSalvamento:        p.alcance > 0 ? (p.salvamentos / p.alcance) * 100 : 0,
-    taxaComentario:        p.alcance > 0 ? (p.comentarios / p.alcance) * 100 : 0,
-    taxaCompartilhamento:  p.alcance > 0 ? (p.compartilhamentos / p.alcance) * 100 : 0,
-    ratioViewsAlcance:     p.alcance > 0 ? p.views / p.alcance : 0,
+    taxaSalvamento:       p.alcance > 0 ? (p.salvamentos / p.alcance) * 100 : 0,
+    taxaComentario:       p.alcance > 0 ? (p.comentarios / p.alcance) * 100 : 0,
+    taxaCompartilhamento: p.alcance > 0 ? (p.compartilhamentos / p.alcance) * 100 : 0,
+    ratioViewsAlcance:    p.alcance > 0 ? p.views / p.alcance : 0,
   }));
 
   const sum = (field) => posts.reduce((acc, p) => acc + (p[field]||0), 0);
   const avg = (field) => posts.length ? sum(field)/posts.length : 0;
-
-  const porPlataforma = {};
-  posts.forEach(p => {
-    if (!porPlataforma[p.plataforma]) {
-      porPlataforma[p.plataforma] = { alcance:0, engajamento:0, posts:0, views:0 };
-    }
-    porPlataforma[p.plataforma].alcance      += p.alcance;
-    porPlataforma[p.plataforma].engajamento  += p.engajamentoTotal;
-    porPlataforma[p.plataforma].views        += p.views;
-    porPlataforma[p.plataforma].posts        += 1;
-  });
 
   return {
     posts,
@@ -503,14 +490,16 @@ function aggregateData(pages) {
     totalComentarios:   sum('comentarios'),
     totalCompartilhamentos: sum('compartilhamentos'),
     totalSalvamentos:   sum('salvamentos'),
+    totalReposts:       sum('reposts'),
+    totalNovosSeguidor: sum('novosSeguidor'),
     taxaMedia:          avg('taxa'),
-    porPlataforma,
     idCliente:          posts[0]?.idCliente ?? '—',
     mes:                posts[0]?.mesPostagem ?? '—',
     segFaixaEtaria:     (pages.map(p=>prop(p,FIELDS.segFaixaEtaria)).find(v=>v)) ?? '—',
     segSexo:            (pages.map(p=>prop(p,FIELDS.segSexo)).find(v=>v)) ?? '—',
     segCidades:         (pages.map(p=>prop(p,FIELDS.segCidades)).find(v=>v)) ?? '—',
     novosSeg:           (pages.map(p=>prop(p,FIELDS.novosSeg)).find(v=>v)) ?? 0,
+    seguidoresTotais:   (pages.map(p=>prop(p,FIELDS.seguidoresTotais)).find(v=>v)) ?? 0,
     mediaRatioViews:          avg('ratioViewsAlcance'),
     mediaTaxaSalvamento:      avg('taxaSalvamento'),
     mediaTaxaComentario:      avg('taxaComentario'),
@@ -518,209 +507,36 @@ function aggregateData(pages) {
   };
 }
 
-
-// ─────────────────────────────────────────────
-// Número formatado
-// ─────────────────────────────────────────────
+// ── Formatação ──
 function fmt(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1).replace('.0','') + 'M';
   if (n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'k';
   return Math.round(n).toString();
 }
 
-// ─────────────────────────────────────────────
-// Chip de plataforma
-// ─────────────────────────────────────────────
 function platformChip(p) {
-  const map = {
-    'Instagram': 'chip-ig',
-    'TikTok':    'chip-tt',
-    'LinkedIn':  'chip-li',
-    'Facebook':  'chip-fb',
-  };
+  const map = { 'Instagram':'chip-ig', 'TikTok':'chip-tt', 'LinkedIn':'chip-li', 'Facebook':'chip-fb' };
   return `<span class="chip ${map[p]||''}">${p}</span>`;
 }
 
-// ─────────────────────────────────────────────
-// Classe da taxa
-// ─────────────────────────────────────────────
-function taxaClass(t) {
-  if (t >= 3) return 'taxa-good';
-  if (t >= 1) return 'taxa-mid';
-  return 'taxa-low';
-}
-
-// ─────────────────────────────────────────────
-// Cores dos gráficos de barra por plataforma
-// ─────────────────────────────────────────────
-const PLAT_COLORS = {
-  'Instagram': '#E8593C',
-  'TikTok':    '#6D4FBB',
-  'LinkedIn':  '#457B9D',
-  'Facebook':  '#2563EB',
-};
-function platColor(p) { return PLAT_COLORS[p] || '#888780'; }
-
-// ─────────────────────────────────────────────
-// Donut SVG simples
-// ─────────────────────────────────────────────
-function buildDonut(porPlataforma) {
-  const plats = Object.keys(porPlataforma);
-  const totalEng = plats.reduce((s,p) => s + porPlataforma[p].engajamento, 0) || 1;
-  const r = 40, cx = 60, cy = 60, stroke = 18;
-  const circ = 2 * Math.PI * r;
-  let offset = 0;
-  let arcs = '';
-  const legend = [];
-
-  plats.forEach(p => {
-    const pct = porPlataforma[p].engajamento / totalEng;
-    const dash = pct * circ;
-    arcs += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${platColor(p)}"
-      stroke-width="${stroke}" stroke-dasharray="${dash.toFixed(2)} ${circ.toFixed(2)}"
-      stroke-dashoffset="${(-offset).toFixed(2)}" stroke-linecap="butt"/>`;
-    legend.push({ label: p, pct: Math.round(pct*100), color: platColor(p) });
-    offset += dash;
-  });
-
-  const svgStr = `<svg viewBox="0 0 120 120" width="110" height="110" style="display:block">
-    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#F0EDE6" stroke-width="${stroke}"/>
-    ${arcs}
-    <text x="${cx}" y="${cy+5}" text-anchor="middle" font-family="DM Serif Display,serif"
-      font-size="15" fill="#1A1A18">${plats.length}</text>
-  </svg>`;
-
-  const legStr = legend.map(l =>
-    `<div class="leg-row">
-      <span class="leg-dot" style="background:${l.color}"></span>
-      <span>${l.label}</span>
-      <span class="leg-pct">${l.pct}%</span>
-    </div>`
-  ).join('');
-
-  return `<div class="donut-wrap">
-    ${svgStr}
-    <div class="donut-legend">${legStr}</div>
-  </div>`;
-}
-
-// ─────────────────────────────────────────────
-// Gráfico de barras horizontal
-// ─────────────────────────────────────────────
-function buildBars(porPlataforma) {
-  const plats = Object.keys(porPlataforma);
-  const maxAlc = Math.max(...plats.map(p => porPlataforma[p].alcance), 1);
-  return plats.map(p => {
-    const pct = Math.round(porPlataforma[p].alcance / maxAlc * 100);
-    return `<div class="bar-row">
-      <span class="bar-lbl">${p}</span>
-      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${platColor(p)}"></div></div>
-      <span class="bar-val">${fmt(porPlataforma[p].alcance)}</span>
-    </div>`;
-  }).join('');
-}
-
-// ─────────────────────────────────────────────
-// Tabela de posts
-// ─────────────────────────────────────────────
-function buildTable(posts) {
-  const sorted = [...posts].sort((a,b) => b.engajamentoTotal - a.engajamentoTotal);
-  const rows = sorted.slice(0,10).map(p => {
-    const thumb = p.capa
-      ? `<img class="post-thumb" src="${p.capa}" alt="" loading="lazy" onerror="this.style.display='none'">`
-      : `<div class="post-thumb" style="background:var(--border);border-radius:6px;display:inline-block"></div>`;
-    const cell = p.linkPost
-      ? `<a class="post-link" href="${p.linkPost}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;text-decoration:none">${thumb}</a>`
-      : thumb;
-    return `<tr>
-      <td>${cell}</td>
-      <td>${platformChip(p.plataforma)}</td>
-      <td>${fmt(p.alcance)}</td>
-      <td>${fmt(p.views)}</td>
-      <td>${fmt(p.engajamentoTotal)}</td>
-      <td class="taxa ${taxaClass(p.taxa)}">${p.taxa.toFixed(2)}%</td>
-    </tr>`;
-  }).join('');
-
-  return `<table class="posts-table">
-    <thead><tr>
-      <th>Capa</th>
-      <th>Canal</th>
-      <th>Alcance</th>
-      <th>Views</th>
-      <th>Engaj.</th>
-      <th>Taxa</th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
-}
-
-// ─────────────────────────────────────────────
-// Helpers de ranking
-// ─────────────────────────────────────────────
-function getPostLabel(p){
-  const titulo = (p.legenda || p.idCliente || '—').substring(0, 60);
+// ── Post label for rankings ──
+function getPostLabel(p) {
+  const titulo = (p.legenda || p.idCliente || '—').substring(0, 55);
   const thumb = p.capa
-    ? `<img class="rank-thumb" src="${p.capa}" alt="" loading="lazy" onerror="this.style.display='none'">`
-    : `<div class="rank-thumb-placeholder">📷</div>`;
+    ? `<img class="rank-thumb" src="${p.capa}" alt="" loading="lazy" onerror="this.parentElement.querySelector('.rank-thumb')?.remove()">`
+    : `<div class="rank-thumb-placeholder"></div>`;
   const label = `<span class="rank-id" title="${titulo}">${titulo}</span><div class="rank-plat">${p.plataforma || '—'}</div>`;
   const inner = `${thumb}<div class="rank-text">${label}</div>`;
-  if (p.linkPost) {
-    return `<a class="rank-info" href="${p.linkPost}" target="_blank" rel="noopener" style="text-decoration:none">${inner}</a>`;
-  }
+  if (p.linkPost) return `<a class="rank-info" href="${p.linkPost}" target="_blank" rel="noopener" style="text-decoration:none">${inner}</a>`;
   return `<div class="rank-info">${inner}</div>`;
 }
 
-function parsePairs(str){
-  if(!str||str==='—')return[];
-  return str.split('|').map(s=>s.trim()).map(s=>{
-    const m=s.match(/^(.+?):\s*([\d.,]+)\s*%?$/);
-    return m?{label:m[1].trim(),value:parseFloat(m[2].replace(',','.'))}:null;
-  }).filter(Boolean);
-}
-function buildAgeChart(str){
-  const data=parsePairs(str);
-  if(!data.length)return`<div style="color:var(--ink3);font-size:12px">Sem dados</div>`;
-  const max=Math.max(...data.map(d=>d.value));
-  return`<div style="display:flex;flex-direction:column;gap:8px">`+data.map(d=>`
-    <div style="display:flex;align-items:center;gap:10px;font-size:12px">
-      <div style="width:42px;color:var(--ink2);font-weight:600">${d.label}</div>
-      <div style="flex:1;background:#f1f3f5;border-radius:6px;height:14px;overflow:hidden">
-        <div style="width:${(d.value/max*100).toFixed(1)}%;height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6);border-radius:6px"></div>
-      </div>
-      <div style="width:38px;text-align:right;color:var(--ink1);font-weight:600">${d.value}%</div>
-    </div>`).join('')+`</div>`;
-}
-function buildSexChart(str){
-  const data=parsePairs(str);
-  if(!data.length)return`<div style="color:var(--ink3);font-size:12px">Sem dados</div>`;
-  const colors=['#ec4899','#3b82f6','#10b981'];
-  const total=data.reduce((a,b)=>a+b.value,0)||100;
-  let acc=0;const R=52,C=2*Math.PI*R;
-  const segs=data.map((d,i)=>{
-    const frac=d.value/total,len=frac*C,off=C-acc*C;acc+=frac;
-    return`<circle cx="70" cy="70" r="${R}" fill="none" stroke="${colors[i%3]}" stroke-width="22" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${off}" transform="rotate(-90 70 70)"/>`;
-  }).join('');
-  const legend=data.map((d,i)=>`<div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="width:10px;height:10px;border-radius:2px;background:${colors[i%3]}"></span><span style="color:var(--ink2)">${d.label}</span><strong style="margin-left:auto;color:var(--ink1)">${d.value}%</strong></div>`).join('');
-  return`<div style="display:flex;flex-direction:column;align-items:center;gap:10px"><svg width="140" height="140" viewBox="0 0 140 140">${segs}</svg><div style="width:100%;display:flex;flex-direction:column;gap:4px">${legend}</div></div>`;
-}
-function buildCitiesChart(str){
-  if(!str||str==='—')return`<div style="color:var(--ink3);font-size:12px">Sem dados</div>`;
-  const cities=str.split('|').map(s=>s.trim()).filter(Boolean);
-  const colors=['#f59e0b','#ef4444','#8b5cf6','#14b8a6','#0ea5e9'];
-  return`<div style="display:flex;flex-direction:column;gap:8px">`+cities.map((c,i)=>`
-    <div style="display:flex;align-items:center;gap:10px;font-size:12px">
-      <div style="width:22px;height:22px;border-radius:50%;background:${colors[i%5]};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0">${i+1}</div>
-      <div style="color:var(--ink1);font-weight:500">${c}</div>
-    </div>`).join('')+`</div>`;
-}
-
-function buildTopPorMetrica(posts, campo, label) {
+// ── Top posts por métrica ──
+function buildTopPorMetrica(posts, campo, label, count=5) {
   const sorted = [...posts].sort((a,b) => (b[campo]||0) - (a[campo]||0));
-  const medalhas = ['🥇','🥈','🥉'];
-  const classes = ['gold','silver','bronze'];
-  return sorted.slice(0,3).map((p,i) => {
-    return `<div class="rank-card ${classes[i]}">
-      <div class="medal">${medalhas[i]}</div>
+  return '<div class="ranking">' + sorted.slice(0, count).map((p,i) => `
+    <div class="rank-card">
+      <div class="rank-pos">${i+1}</div>
       ${getPostLabel(p)}
       <div class="rank-stats">
         <div class="rank-stat">
@@ -732,247 +548,309 @@ function buildTopPorMetrica(posts, campo, label) {
           <div class="rank-stat-lbl">Taxa</div>
         </div>
       </div>
-    </div>`;
-  }).join('');
-}
-
-function buildTopRanking(posts) {
-  const medals=['gold','silver','bronze','neutral','neutral'], icons=['🥇','🥈','🥉','4º','5º'];
-  const sorted=[...posts].sort((a,b)=>b.engajamentoTotal-a.engajamentoTotal);
-  return '<div class="ranking">'+sorted.slice(0,5).map((p,i)=>`
-    <div class="rank-card ${medals[i]}">
-      <div class="medal">${icons[i]}</div>
-      ${getPostLabel(p)}
-      <div class="rank-stats">
-        <div class="rank-stat"><div class="rank-stat-val">${fmt(p.engajamentoTotal || 0)}</div><div class="rank-stat-lbl">Engaj.</div></div>
-        <div class="rank-stat"><div class="rank-stat-val">${fmt(p.alcance || 0)}</div><div class="rank-stat-lbl">Alcance</div></div>
-        <div class="rank-stat"><div class="rank-stat-val">${(p.taxa || 0).toFixed(1)}%</div><div class="rank-stat-lbl">Taxa</div></div>
-      </div>
     </div>
-  `).join('')+'</div>';
+  `).join('') + '</div>';
 }
 
-function buildWorstRanking(posts) {
-  const icons=['📉','⚠️','🪫','4º','5º'];
-  const sorted=[...posts].sort((a,b)=>a.engajamentoTotal-b.engajamentoTotal);
-  return '<div class="ranking">'+sorted.slice(0,5).map((p,i)=>`
-    <div class="rank-card worst">
-      <div class="medal">${icons[i] || '•'}</div>
-      ${getPostLabel(p)}
-      <div class="rank-stats">
-        <div class="rank-stat"><div class="rank-stat-val">${fmt(p.engajamentoTotal || 0)}</div><div class="rank-stat-lbl">Engaj.</div></div>
-        <div class="rank-stat"><div class="rank-stat-val">${fmt(p.alcance || 0)}</div><div class="rank-stat-lbl">Alcance</div></div>
-        <div class="rank-stat"><div class="rank-stat-val">${(p.taxa || 0).toFixed(1)}%</div><div class="rank-stat-lbl">Taxa</div></div>
-      </div>
-    </div>
-  `).join('')+'</div>';
-}
-
-
-// ─────────────────────────────────────────────
-// Performance por tipo de conteúdo
-// ─────────────────────────────────────────────
+// ── Performance por tipo de conteúdo ──
 function buildPerformancePorTipo(posts) {
   const tipos = {};
   posts.forEach(p => {
     const t = p.tipoConteudo || 'Não definido';
-    if (!tipos[t]) tipos[t] = { engajamento: 0, alcance: 0, taxa: 0, count: 0 };
+    if (!tipos[t]) tipos[t] = { engajamento: 0, alcance: 0, views: 0, taxa: 0, count: 0 };
     tipos[t].engajamento += p.engajamentoTotal || 0;
     tipos[t].alcance     += p.alcance || 0;
+    tipos[t].views       += p.views || 0;
     tipos[t].taxa        += p.taxa || 0;
     tipos[t].count       += 1;
   });
-
-  const cores = {
-    'Reels':     '#E8593C',
-    'Carrossel': '#534AB7',
-    'Foto':      '#457B9D',
-    'Stories':   '#2D6A4F',
-  };
-
+  const cores = { 'Reels':'#E8593C', 'Carrossel':'#534AB7', 'Foto':'#457B9D', 'Stories':'#2D6A4F' };
   return Object.entries(tipos).map(([tipo, d]) => {
     const taxaMedia = d.count > 0 ? (d.taxa / d.count).toFixed(1) : '0';
-    const cor = cores[tipo] || '#888780';
-    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--border)">
-      <div style="width:10px;height:10px;border-radius:50%;background:${cor};flex-shrink:0"></div>
-      <div style="flex:1;font-size:13px;color:var(--ink);font-weight:500">${tipo}</div>
-      <div style="font-size:12px;color:var(--ink2)">${d.count} posts</div>
-      <div style="font-size:13px;font-weight:500;color:var(--ink);min-width:60px;text-align:right">Taxa ${taxaMedia}%</div>
-      <div style="font-size:12px;color:var(--ink2);min-width:70px;text-align:right">Alcance ${fmt(d.alcance)}</div>
+    return `<div class="perf-row">
+      <div class="perf-dot" style="background:${cores[tipo]||'#888'}"></div>
+      <div class="perf-name">${tipo}</div>
+      <div class="perf-stat">${d.count} posts</div>
+      <div class="perf-stat"><strong>${taxaMedia}%</strong> taxa</div>
+      <div class="perf-stat">${fmt(d.alcance)} alcance</div>
     </div>`;
   }).join('');
 }
 
-// ─────────────────────────────────────────────
-// Renderiza o dashboard completo
-// ─────────────────────────────────────────────
-function renderDashboard(agg) {
-  document.getElementById('client-name').innerHTML =
-    `${agg.idCliente} — <em>${agg.mes}</em>`;
-  document.getElementById('header-sub').textContent =
-    `Relatório de redes sociais · ${agg.totalPosts} posts analisados`;
+// ── Performance por tema/categoria ──
+function buildPerformancePorTema(posts) {
+  const temas = {};
+  posts.forEach(p => {
+    const t = p.temaCategoria || 'Não definido';
+    if (!temas[t]) temas[t] = { engajamento: 0, alcance: 0, taxa: 0, count: 0 };
+    temas[t].engajamento += p.engajamentoTotal || 0;
+    temas[t].alcance     += p.alcance || 0;
+    temas[t].taxa        += p.taxa || 0;
+    temas[t].count       += 1;
+  });
+  const cores = { 'Educativo':'#3B82F6', 'Bastidor':'#F59E0B', 'Depoimento':'#10B981', 'Venda':'#EF4444', 'Entretenimento':'#8B5CF6' };
+  return Object.entries(temas).map(([tema, d]) => {
+    const taxaMedia = d.count > 0 ? (d.taxa / d.count).toFixed(1) : '0';
+    return `<div class="perf-row">
+      <div class="perf-dot" style="background:${cores[tema]||'#888'}"></div>
+      <div class="perf-name">${tema}</div>
+      <div class="perf-stat">${d.count} posts</div>
+      <div class="perf-stat"><strong>${taxaMedia}%</strong> taxa</div>
+      <div class="perf-stat">${fmt(d.alcance)} alcance</div>
+    </div>`;
+  }).join('');
+}
 
+// ── Audience charts ──
+function parsePairs(str) {
+  if (!str || str === '—') return [];
+  return str.split('|').map(s => s.trim()).map(s => {
+    const m = s.match(/^(.+?):\s*([\d.,]+)\s*%?$/);
+    return m ? { label: m[1].trim(), value: parseFloat(m[2].replace(',','.')) } : null;
+  }).filter(Boolean);
+}
+
+function buildAgeChart(str) {
+  const data = parsePairs(str);
+  if (!data.length) return `<div style="color:var(--ink3);font-size:12px">Sem dados</div>`;
+  const max = Math.max(...data.map(d => d.value));
+  return `<div style="display:flex;flex-direction:column;gap:8px">` + data.map(d => `
+    <div style="display:flex;align-items:center;gap:10px;font-size:12px">
+      <div style="width:42px;color:var(--ink2);font-weight:500;font-size:11px">${d.label}</div>
+      <div style="flex:1;background:var(--border);border-radius:4px;height:10px;overflow:hidden">
+        <div style="width:${(d.value/max*100).toFixed(1)}%;height:100%;background:var(--ink);border-radius:4px;opacity:0.7"></div>
+      </div>
+      <div style="width:36px;text-align:right;color:var(--ink);font-weight:500;font-size:11px">${d.value}%</div>
+    </div>`).join('') + `</div>`;
+}
+
+function buildSexChart(str) {
+  const data = parsePairs(str);
+  if (!data.length) return `<div style="color:var(--ink3);font-size:12px">Sem dados</div>`;
+  const colors = ['#1A1A18', '#A8A69F', '#D4D3CF'];
+  const total = data.reduce((a,b) => a+b.value, 0) || 100;
+  let acc = 0;
+  const R = 44, C = 2*Math.PI*R;
+  const segs = data.map((d,i) => {
+    const frac = d.value/total, len = frac*C, off = C - acc*C;
+    acc += frac;
+    return `<circle cx="60" cy="60" r="${R}" fill="none" stroke="${colors[i%3]}" stroke-width="16" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${off}" transform="rotate(-90 60 60)"/>`;
+  }).join('');
+  const legend = data.map((d,i) => `<div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="width:8px;height:8px;border-radius:2px;background:${colors[i%3]}"></span><span style="color:var(--ink2)">${d.label}</span><strong style="margin-left:auto;color:var(--ink)">${d.value}%</strong></div>`).join('');
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:10px"><svg width="120" height="120" viewBox="0 0 120 120">${segs}</svg><div style="width:100%;display:flex;flex-direction:column;gap:4px">${legend}</div></div>`;
+}
+
+function buildCitiesChart(str) {
+  if (!str || str === '—') return `<div style="color:var(--ink3);font-size:12px">Sem dados</div>`;
+  const cities = str.split('|').map(s => s.trim()).filter(Boolean);
+  return `<div style="display:flex;flex-direction:column;gap:8px">` + cities.map((c,i) => `
+    <div style="display:flex;align-items:center;gap:10px;font-size:12px">
+      <div style="width:20px;height:20px;border-radius:50%;background:var(--ink);opacity:${1 - i*0.15};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:10px;flex-shrink:0">${i+1}</div>
+      <div style="color:var(--ink);font-weight:400">${c}</div>
+    </div>`).join('') + `</div>`;
+}
+
+// ── Tabs ──
+function initTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const group = btn.closest('.card');
+      group.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      group.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      group.querySelector(`#${btn.dataset.target}`).classList.add('active');
+    });
+  });
+}
+
+// ── Render ──
+function renderDashboard(agg) {
+  document.getElementById('client-name').innerHTML = `${agg.idCliente} — <em>${agg.mes}</em>`;
+  document.getElementById('header-sub').textContent = `Relatório de redes sociais · ${agg.totalPosts} posts analisados`;
+
+  const novosSeg = typeof agg.novosSeg === 'number' ? agg.novosSeg : parseInt(agg.novosSeg) || 0;
+  const segTotais = typeof agg.seguidoresTotais === 'number' ? agg.seguidoresTotais : parseInt(agg.seguidoresTotais) || 0;
 
   document.getElementById('dashboard-content').innerHTML = `
 
+    <!-- BLOCO 1: KPIs principais -->
+    <div class="section-title">Visão geral</div>
     <div class="kpi-grid">
-      <div class="kpi-card accent1" style="grid-column: span 2">
-        <div class="kpi-label">Alcance geral</div>
-        <div class="kpi-value" style="font-size:48px">${fmt(agg.totalAlcance)}</div>
-        <div class="kpi-delta neutral">pessoas alcançadas em ${agg.totalPosts} posts</div>
+      <div class="kpi-card">
+        <div class="kpi-label">Alcance total</div>
+        <div class="kpi-value">${fmt(agg.totalAlcance)}</div>
+        <div class="kpi-sub">pessoas alcançadas</div>
       </div>
-      <div class="kpi-card accent4" style="grid-column: span 2">
-        <div class="kpi-label">Taxa média de engajamento</div>
-        <div class="kpi-value" style="font-size:48px">${agg.taxaMedia.toFixed(1)}%</div>
-        <div class="kpi-delta ${agg.taxaMedia >= 3 ? 'up' : agg.taxaMedia >= 1 ? 'neutral' : 'dn'}">
-          ${agg.taxaMedia >= 3 ? 'Acima da média' : agg.taxaMedia >= 1 ? 'Na média' : 'Abaixo da média'}
-        </div>
-      </div>
-      <div class="kpi-card accent2">
-        <div class="kpi-label">Views totais</div>
+      <div class="kpi-card">
+        <div class="kpi-label">Visualizações totais</div>
         <div class="kpi-value">${fmt(agg.totalViews)}</div>
-        <div class="kpi-delta neutral">impressões</div>
+        <div class="kpi-sub">views no período</div>
       </div>
-      <div class="kpi-card accent3">
+      <div class="kpi-card">
         <div class="kpi-label">Engajamento total</div>
         <div class="kpi-value">${fmt(agg.totalEngajamento)}</div>
-        <div class="kpi-delta neutral">interações</div>
+        <div class="kpi-sub">interações</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Taxa de engajamento</div>
+        <div class="kpi-value">${agg.taxaMedia.toFixed(1)}%</div>
+        <div class="kpi-sub">média por post</div>
       </div>
     </div>
 
+    <!-- BLOCO 2: Interações detalhadas -->
+    <div class="section-title">Interações</div>
     <div class="interact-grid">
       <div class="interact-card">
-        <div class="interact-icon">❤️</div>
         <div class="interact-val">${fmt(agg.totalCurtidas)}</div>
         <div class="interact-lbl">Curtidas</div>
       </div>
       <div class="interact-card">
-        <div class="interact-icon">💬</div>
         <div class="interact-val">${fmt(agg.totalComentarios)}</div>
         <div class="interact-lbl">Comentários</div>
       </div>
       <div class="interact-card">
-        <div class="interact-icon">↗️</div>
         <div class="interact-val">${fmt(agg.totalCompartilhamentos)}</div>
         <div class="interact-lbl">Compartilhamentos</div>
       </div>
       <div class="interact-card">
-        <div class="interact-icon">🔖</div>
         <div class="interact-val">${fmt(agg.totalSalvamentos)}</div>
         <div class="interact-lbl">Salvamentos</div>
       </div>
+      <div class="interact-card">
+        <div class="interact-val">${fmt(agg.totalReposts)}</div>
+        <div class="interact-lbl">Reposts</div>
+      </div>
+      <div class="interact-card">
+        <div class="interact-val">${fmt(segTotais)}</div>
+        <div class="interact-lbl">Seguidores totais</div>
+      </div>
+      <div class="interact-card">
+        <div class="interact-val">${fmt(novosSeg)}</div>
+        <div class="interact-lbl">Novos seguidores</div>
+      </div>
     </div>
 
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-title">Métricas de qualidade</div>
-      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:4px">
-        <div style="background:var(--bg);border-radius:var(--radius);padding:1rem;text-align:center">
-          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:8px">Taxa de salvamento</div>
-          <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink)">${agg.mediaTaxaSalvamento.toFixed(2)}%</div>
-          <div style="font-size:11px;color:var(--ink3);margin-top:4px">salvamentos ÷ alcance</div>
+    <!-- BLOCO 3: Taxas de qualidade -->
+    <div class="card">
+      <div class="card-title">Taxas de qualidade</div>
+      <div class="quality-grid">
+        <div class="quality-item">
+          <div class="quality-label">Taxa de salvamento</div>
+          <div class="quality-value">${agg.mediaTaxaSalvamento.toFixed(2)}%</div>
+          <div class="quality-sub">salvamentos / alcance</div>
         </div>
-        <div style="background:var(--bg);border-radius:var(--radius);padding:1rem;text-align:center">
-          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:8px">Taxa de comentário</div>
-          <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink)">${agg.mediaTaxaComentario.toFixed(2)}%</div>
-          <div style="font-size:11px;color:var(--ink3);margin-top:4px">comentários ÷ alcance</div>
+        <div class="quality-item">
+          <div class="quality-label">Taxa de comentário</div>
+          <div class="quality-value">${agg.mediaTaxaComentario.toFixed(2)}%</div>
+          <div class="quality-sub">comentários / alcance</div>
         </div>
-        <div style="background:var(--bg);border-radius:var(--radius);padding:1rem;text-align:center">
-          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:8px">Taxa de compartilhamento</div>
-          <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink)">${agg.mediaTaxaCompartilhamento.toFixed(2)}%</div>
-          <div style="font-size:11px;color:var(--ink3);margin-top:4px">compartilhamentos ÷ alcance</div>
+        <div class="quality-item">
+          <div class="quality-label">Taxa de compartilhamento</div>
+          <div class="quality-value">${agg.mediaTaxaCompartilhamento.toFixed(2)}%</div>
+          <div class="quality-sub">compartilhamentos / alcance</div>
         </div>
-        <div style="background:var(--bg);border-radius:var(--radius);padding:1rem;text-align:center">
-          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:8px">Ratio views/alcance</div>
-          <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink)">${agg.mediaRatioViews.toFixed(1)}x</div>
-          <div style="font-size:11px;color:var(--ink3);margin-top:4px">acima de 2x = ótimo</div>
+        <div class="quality-item">
+          <div class="quality-label">Views / alcance</div>
+          <div class="quality-value">${agg.mediaRatioViews.toFixed(1)}x</div>
+          <div class="quality-sub">acima de 2x = ótimo</div>
         </div>
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:14px">
+    <!-- BLOCO 4: Performance por tipo -->
+    <div class="card">
       <div class="card-title">Performance por tipo de conteúdo</div>
-      <div style="margin-top:4px">${buildPerformancePorTipo(agg.posts)}</div>
-      <div style="font-size:11px;color:var(--ink3);margin-top:12px">Preencha o campo "Tipo de conteúdo" no Notion para ver dados aqui: Reels / Carrossel / Foto / Stories</div>
+      ${buildPerformancePorTipo(agg.posts)}
     </div>
 
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-title">Top 3 por curtidas</div>
-      <div class="ranking">${buildTopPorMetrica(agg.posts,'curtidas','Curtidas')}</div>
-    </div>
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-title">Top 3 por comentários</div>
-      <div class="ranking">${buildTopPorMetrica(agg.posts,'comentarios','Coment.')}</div>
-    </div>
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-title">Top 3 por compartilhamentos</div>
-      <div class="ranking">${buildTopPorMetrica(agg.posts,'compartilhamentos','Compart.')}</div>
-    </div>
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-title">Top 3 por salvamentos</div>
-      <div class="ranking">${buildTopPorMetrica(agg.posts,'salvamentos','Salvam.')}</div>
+    <!-- BLOCO 5: Performance por tema -->
+    <div class="card">
+      <div class="card-title">Performance por tema / categoria</div>
+      ${buildPerformancePorTema(agg.posts)}
     </div>
 
-    <div class="card" style="margin-bottom:14px">
+    <!-- BLOCO 6: Top Posts -->
+    <div class="card">
+      <div class="card-title">Top posts</div>
+      <div class="tabs">
+        <button class="tab-btn active" data-target="tab-engajamento">Engajamento</button>
+        <button class="tab-btn" data-target="tab-alcance">Alcance</button>
+        <button class="tab-btn" data-target="tab-curtidas">Curtidas</button>
+        <button class="tab-btn" data-target="tab-comentarios">Comentários</button>
+        <button class="tab-btn" data-target="tab-compartilhamentos">Compartilhamentos</button>
+        <button class="tab-btn" data-target="tab-salvamentos">Salvamentos</button>
+      </div>
+      <div id="tab-engajamento" class="tab-content active">
+        ${buildTopPorMetrica(agg.posts, 'engajamentoTotal', 'Engaj.')}
+      </div>
+      <div id="tab-alcance" class="tab-content">
+        ${buildTopPorMetrica(agg.posts, 'alcance', 'Alcance')}
+      </div>
+      <div id="tab-curtidas" class="tab-content">
+        ${buildTopPorMetrica(agg.posts, 'curtidas', 'Curtidas')}
+      </div>
+      <div id="tab-comentarios" class="tab-content">
+        ${buildTopPorMetrica(agg.posts, 'comentarios', 'Coment.')}
+      </div>
+      <div id="tab-compartilhamentos" class="tab-content">
+        ${buildTopPorMetrica(agg.posts, 'compartilhamentos', 'Compart.')}
+      </div>
+      <div id="tab-salvamentos" class="tab-content">
+        ${buildTopPorMetrica(agg.posts, 'salvamentos', 'Salvam.')}
+      </div>
+    </div>
+
+    <!-- BLOCO 7: Audiência -->
+    <div class="card">
       <div class="card-title">Audiência do mês</div>
-      <div style="display:grid;grid-template-columns:1.3fr 0.9fr 1.1fr;gap:24px;align-items:start">
+      <div class="audience-grid">
         <div>
-          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:12px">Faixa etária</div>
+          <div class="audience-label">Faixa etária</div>
           ${buildAgeChart(agg.segFaixaEtaria)}
         </div>
         <div>
-          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:12px">Sexo</div>
+          <div class="audience-label">Sexo</div>
           ${buildSexChart(agg.segSexo)}
         </div>
         <div>
-          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:12px">Top cidades</div>
+          <div class="audience-label">Top cidades</div>
           ${buildCitiesChart(agg.segCidades)}
         </div>
       </div>
     </div>
 
     <div class="footer">
-      <span>Cliente: <strong>${agg.idCliente}</strong></span>
-      <span>Atualizado automaticamente via Notion · ${new Date().toLocaleDateString('pt-BR')}</span>
+      <span>${agg.idCliente}</span>
+      <span>Atualizado via Notion · ${new Date().toLocaleDateString('pt-BR')}</span>
     </div>
   `;
+
+  initTabs();
 }
 
-// ─────────────────────────────────────────────
-// Entry point
-// ─────────────────────────────────────────────
+// ── Entry point ──
 async function loadDashboard() {
   const mes = document.getElementById('month-select').value;
   document.getElementById('dashboard-content').innerHTML =
     '<div class="loading"><div class="spinner"></div> Buscando dados do Notion…</div>';
-
   try {
     const pages = await fetchNotionData(mes);
     if (!pages.length) {
       document.getElementById('dashboard-content').innerHTML =
-        '<div class="error-box">Nenhum dado encontrado para este mês. Verifique se o campo "Mês postagem" está preenchido corretamente.</div>';
+        '<div class="error-box">Nenhum dado encontrado para este mês. Verifique se o campo "Mês postagem" está preenchido.</div>';
       return;
     }
-
     const agg = aggregateData(pages);
-
-    document.getElementById('client-name').innerHTML =
-      `${agg.idCliente} — <em>${mes}</em>`;
+    document.getElementById('client-name').innerHTML = `${agg.idCliente} — <em>${mes}</em>`;
     renderDashboard(agg);
-
   } catch(err) {
     document.getElementById('dashboard-content').innerHTML =
-      `<div class="error-box">
-        <strong>Erro ao carregar dados</strong><br><br>
-        ${err.message}<br><br>
-        Verifique se o NOTION_TOKEN, DATABASE_ID e a chave Anthropic estão corretos no CONFIG.
-      </div>`;
+      `<div class="error-box"><strong>Erro ao carregar dados</strong><br><br>${err.message}</div>`;
     console.error(err);
   }
 }
 
-// ─────────────────────────────────────────────
-// Init
-// ─────────────────────────────────────────────
 populateMonths();
 loadDashboard();
 </script>
