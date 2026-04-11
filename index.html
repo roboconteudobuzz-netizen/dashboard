@@ -702,14 +702,24 @@ function populateMonths() {
   });
 }
 
+// ── Cliente da URL ──
+const CLIENT_ID = new URLSearchParams(window.location.search).get('cliente');
+
 // ── Notion API ──
 async function fetchNotionData(mes) {
+  const filter = CLIENT_ID
+    ? { and: [
+        { property: FIELDS.mesPostagem, select: { equals: mes } },
+        { property: FIELDS.idCliente,   select: { equals: CLIENT_ID } },
+      ]}
+    : { property: FIELDS.mesPostagem, select: { equals: mes } };
+
   const res = await fetch(`/api/notion`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       databaseId: CONFIG.databaseId,
-      filter: { property: FIELDS.mesPostagem, select: { equals: mes } },
+      filter,
       page_size: 100,
     }),
   });
@@ -1137,7 +1147,7 @@ async function loadDashboard() {
     '<div class="loading"><div class="spinner"></div> Buscando dados do Notion…</div>';
   try {
     const pages = await fetchNotionData(mes);
-    if (!pages.length) {
+if (!pages.length) {
       document.getElementById('dashboard-content').innerHTML =
         '<div class="error-box">Nenhum dado encontrado para este mês. Verifique se o campo "Mês postagem" está preenchido.</div>';
       return;
