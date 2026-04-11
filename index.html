@@ -8,7 +8,7 @@
 <style>
   :root {
     --bg: #F7F5F0;
-    --surface: #FFFFFF;
+    --surface: #c64949;
     --ink: #1A1A18;
     --ink2: #6B6860;
     --ink3: #A8A69F;
@@ -130,6 +130,7 @@
   .kpi-label {
     font-size: 11px;
     font-weight: 500;
+    font-family: 'Courier New', Courier, monospace;
     letter-spacing: .07em;
     text-transform: uppercase;
     color: var(--ink3);
@@ -279,48 +280,18 @@
   .interact-val{font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink);line-height:1}
   .interact-lbl{font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-top:6px}
   .medal{font-size:24px;width:36px;text-align:center;flex-shrink:0}
-  .rank-info{flex:1;min-width:0}
-  .rank-id{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rank-info{flex:1;min-width:0;display:flex;align-items:center;gap:12px}
+  .rank-thumb{width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--border)}
+  .rank-thumb-placeholder{width:48px;height:48px;border-radius:8px;background:var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--ink3)}
+  .rank-text{flex:1;min-width:0}
+  .rank-id{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
   .rank-plat{font-size:11px;color:var(--ink3);margin-top:2px}
+  .post-thumb{width:36px;height:36px;border-radius:6px;object-fit:cover;vertical-align:middle;flex-shrink:0;background:var(--border)}
   .rank-stats{display:flex;gap:20px;flex-shrink:0}
   .rank-stat{text-align:right}
   .rank-stat-val{font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink);line-height:1}
   .rank-stat-lbl{font-size:10px;color:var(--ink3);letter-spacing:.05em;text-transform:uppercase;margin-top:2px}
 
-  /* SWOT */
-  .swot-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-  .swot-cell{border-radius:var(--radius);padding:18px 20px;min-height:120px}
-  .swot-cell.s{background:#EAF4EE}.swot-cell.w{background:#FEF3EE}
-  .swot-cell.o{background:#EEF4FD}.swot-cell.t{background:#FDF3F3}
-  .swot-letter{font-family:'DM Serif Display',serif;font-size:28px;line-height:1;margin-bottom:4px}
-  .swot-cell.s .swot-letter{color:#2D6A4F}.swot-cell.w .swot-letter{color:#C05621}
-  .swot-cell.o .swot-letter{color:#1A4E72}.swot-cell.t .swot-letter{color:#9B2C2C}
-  .swot-label{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
-  .swot-cell.s .swot-label{color:#2D6A4F}.swot-cell.w .swot-label{color:#C05621}
-  .swot-cell.o .swot-label{color:#1A4E72}.swot-cell.t .swot-label{color:#9B2C2C}
-  .swot-content{font-size:13px;color:var(--ink2);line-height:1.6}
-  .swot-loading{font-size:13px;color:var(--ink3);font-style:italic}
-
-  /* ── INSIGHT BOX ── */
-  .insight-box {
-    background: var(--ink);
-    border-radius: var(--radius);
-    padding: 22px 26px;
-    margin-top: 14px;
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-  }
-  .insight-icon {
-    width: 32px; height: 32px;
-    background: rgba(255,255,255,0.08);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px;
-    flex-shrink: 0;
-  }
-  .insight-text { font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.6; }
-  .insight-text strong { color: #fff; font-weight: 500; }
 
   /* ── FOOTER ── */
   .footer {
@@ -385,6 +356,7 @@ const FIELDS = {
   idCliente:        "ID CLIENTE",
   alcance:          "Alcance",
   atualizadoEm:     "Atualizado em",
+  capa:             "Capa",
   cliquesLink:      "Cliques no link",
   comentarios:      "Comentários",
   compartilhamentos:"Compartilhamentos",
@@ -396,15 +368,20 @@ const FIELDS = {
   linkPost:         "Link do post",
   plataforma:       "Plataforma",
   salvamentos:      "Salvamentos",
-  taxaEngajamento:  "Taxa de engaja...",
+  taxaEngajamento:  "Taxa de engajamento (%)",
   views:            "Views",
   visitasPerfil:    "Visitas ao perfil",
   mesPostagem:      "Mês postagem",
-  legenda:          "Nome do conteúdo",
+  legenda:          "Conteúdo (métrica)",
   segFaixaEtaria:   "Faixa etária",
   segSexo:          "Distribuição sexo",
   segCidades:       "Top cidades",
   novosSeg:         "Novos seguidores",
+  tipoConteudo:     "Tipo de conteúdo",
+  horarioPublicacao:"Horário publicação",
+  temaCategoria:    "Tema/Categoria",
+  ctaPost:          "CTA do post",
+  novosSeguidor:    "Novos seguidores post",
 };
 
 // ─────────────────────────────────────────────
@@ -460,6 +437,7 @@ function prop(page, name) {
     case 'rich_text':return p.rich_text?.[0]?.plain_text ?? null;
     case 'title':    return p.title?.[0]?.plain_text ?? null;
     case 'relation': return p.relation?.map(r=>r.id) ?? [];
+    case 'files':    return p.files?.[0]?.external?.url ?? p.files?.[0]?.file?.url ?? null;
     case 'created_time': return p.created_time;
     case 'last_edited_time': return p.last_edited_time;
     default: return null;
@@ -472,6 +450,7 @@ function prop(page, name) {
 function aggregateData(pages) {
   const posts = pages.map(p => ({
     idCliente:        prop(p, FIELDS.idCliente),
+    capa:             prop(p, FIELDS.capa),
     alcance:          prop(p, FIELDS.alcance) ?? 0,
     cliques:          prop(p, FIELDS.cliquesLink) ?? 0,
     comentarios:      prop(p, FIELDS.comentarios) ?? 0,
@@ -487,6 +466,17 @@ function aggregateData(pages) {
     visitasPerfil:    prop(p, FIELDS.visitasPerfil) ?? 0,
     mesPostagem:      prop(p, FIELDS.mesPostagem),
     legenda:          prop(p, FIELDS.legenda) ?? '',
+    tipoConteudo:     prop(p, FIELDS.tipoConteudo) ?? '—',
+    horarioPublicacao:prop(p, FIELDS.horarioPublicacao) ?? null,
+    temaCategoria:    prop(p, FIELDS.temaCategoria) ?? '—',
+    ctaPost:          prop(p, FIELDS.ctaPost) ?? '—',
+    novosSeguidor:    prop(p, FIELDS.novosSeguidor) ?? 0,
+  })).map(p => ({
+    ...p,
+    taxaSalvamento:        p.alcance > 0 ? (p.salvamentos / p.alcance) * 100 : 0,
+    taxaComentario:        p.alcance > 0 ? (p.comentarios / p.alcance) * 100 : 0,
+    taxaCompartilhamento:  p.alcance > 0 ? (p.compartilhamentos / p.alcance) * 100 : 0,
+    ratioViewsAlcance:     p.alcance > 0 ? p.views / p.alcance : 0,
   }));
 
   const sum = (field) => posts.reduce((acc, p) => acc + (p[field]||0), 0);
@@ -517,33 +507,17 @@ function aggregateData(pages) {
     porPlataforma,
     idCliente:          posts[0]?.idCliente ?? '—',
     mes:                posts[0]?.mesPostagem ?? '—',
-    segFaixaEtaria:     prop(pages[0], FIELDS.segFaixaEtaria) ?? '—',
-    segSexo:            prop(pages[0], FIELDS.segSexo) ?? '—',
-    segCidades:         prop(pages[0], FIELDS.segCidades) ?? '—',
-    novosSeg:           prop(pages[0], FIELDS.novosSeg) ?? 0,
+    segFaixaEtaria:     (pages.map(p=>prop(p,FIELDS.segFaixaEtaria)).find(v=>v)) ?? '—',
+    segSexo:            (pages.map(p=>prop(p,FIELDS.segSexo)).find(v=>v)) ?? '—',
+    segCidades:         (pages.map(p=>prop(p,FIELDS.segCidades)).find(v=>v)) ?? '—',
+    novosSeg:           (pages.map(p=>prop(p,FIELDS.novosSeg)).find(v=>v)) ?? 0,
+    mediaRatioViews:          avg('ratioViewsAlcance'),
+    mediaTaxaSalvamento:      avg('taxaSalvamento'),
+    mediaTaxaComentario:      avg('taxaComentario'),
+    mediaTaxaCompartilhamento:avg('taxaCompartilhamento'),
   };
 }
 
-// ─────────────────────────────────────────────
-// Chama Claude para gerar um insight
-// ─────────────────────────────────────────────
-async function fetchInsightAndSwot(agg) {
-  const prompt = `Analista de redes sociais. Gere em JSON válido (sem markdown):
-{"insight":"2 frases estratégicas","swot":{"s":"forças 1-2 frases","w":"fraquezas 1-2 frases","o":"oportunidades 1-2 frases","t":"ameaças 1-2 frases"}}
-
-Dados: Cliente ${agg.idCliente}, ${agg.mes}, ${agg.totalPosts} posts, alcance ${agg.totalAlcance}, views ${agg.totalViews}, engajamento ${agg.totalEngajamento}, taxa média ${agg.taxaMedia.toFixed(2)}%, curtidas ${agg.totalCurtidas}, comentários ${agg.totalComentarios}, compartilhamentos ${agg.totalCompartilhamentos}, salvamentos ${agg.totalSalvamentos}, plataformas: ${Object.keys(agg.porPlataforma).join(', ')}
-Top post: ${[...agg.posts].sort((a,b)=>b.engajamentoTotal-a.engajamentoTotal)[0]?.legenda?.substring(0,40) || agg.posts[0]?.idCliente || '—'}`;
-
-  const res = await fetch('/api/claude', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:prompt}]})
-  });
-  if(!res.ok) return null;
-  const data = await res.json();
-  const raw = data.content?.[0]?.text ?? '';
-  const clean = raw.replace(/```json|```/gi, '').trim();
-  try { return JSON.parse(clean); } catch { return null; }
-}
 
 // ─────────────────────────────────────────────
 // Número formatado
@@ -651,11 +625,14 @@ function buildBars(porPlataforma) {
 function buildTable(posts) {
   const sorted = [...posts].sort((a,b) => b.engajamentoTotal - a.engajamentoTotal);
   const rows = sorted.slice(0,10).map(p => {
-    const link = p.linkPost
-      ? `<a class="post-link" href="${p.linkPost}" target="_blank" rel="noopener">${p.idCliente || 'Ver post'}</a>`
-      : `<span style="color:var(--ink3)">${p.idCliente || '—'}</span>`;
+    const thumb = p.capa
+      ? `<img class="post-thumb" src="${p.capa}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      : `<div class="post-thumb" style="background:var(--border);border-radius:6px;display:inline-block"></div>`;
+    const cell = p.linkPost
+      ? `<a class="post-link" href="${p.linkPost}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;text-decoration:none">${thumb}</a>`
+      : thumb;
     return `<tr>
-      <td>${link}</td>
+      <td>${cell}</td>
       <td>${platformChip(p.plataforma)}</td>
       <td>${fmt(p.alcance)}</td>
       <td>${fmt(p.views)}</td>
@@ -666,7 +643,7 @@ function buildTable(posts) {
 
   return `<table class="posts-table">
     <thead><tr>
-      <th>Post</th>
+      <th>Capa</th>
       <th>Canal</th>
       <th>Alcance</th>
       <th>Views</th>
@@ -682,10 +659,59 @@ function buildTable(posts) {
 // ─────────────────────────────────────────────
 function getPostLabel(p){
   const titulo = (p.legenda || p.idCliente || '—').substring(0, 60);
+  const thumb = p.capa
+    ? `<img class="rank-thumb" src="${p.capa}" alt="" loading="lazy" onerror="this.style.display='none'">`
+    : `<div class="rank-thumb-placeholder">📷</div>`;
+  const label = `<span class="rank-id" title="${titulo}">${titulo}</span><div class="rank-plat">${p.plataforma || '—'}</div>`;
+  const inner = `${thumb}<div class="rank-text">${label}</div>`;
   if (p.linkPost) {
-    return `<a class="rank-id post-link" href="${p.linkPost}" target="_blank" rel="noopener">${titulo}</a>`;
+    return `<a class="rank-info" href="${p.linkPost}" target="_blank" rel="noopener" style="text-decoration:none">${inner}</a>`;
   }
-  return `<span class="rank-id">${titulo}</span>`;
+  return `<div class="rank-info">${inner}</div>`;
+}
+
+function parsePairs(str){
+  if(!str||str==='—')return[];
+  return str.split('|').map(s=>s.trim()).map(s=>{
+    const m=s.match(/^(.+?):\s*([\d.,]+)\s*%?$/);
+    return m?{label:m[1].trim(),value:parseFloat(m[2].replace(',','.'))}:null;
+  }).filter(Boolean);
+}
+function buildAgeChart(str){
+  const data=parsePairs(str);
+  if(!data.length)return`<div style="color:var(--ink3);font-size:12px">Sem dados</div>`;
+  const max=Math.max(...data.map(d=>d.value));
+  return`<div style="display:flex;flex-direction:column;gap:8px">`+data.map(d=>`
+    <div style="display:flex;align-items:center;gap:10px;font-size:12px">
+      <div style="width:42px;color:var(--ink2);font-weight:600">${d.label}</div>
+      <div style="flex:1;background:#f1f3f5;border-radius:6px;height:14px;overflow:hidden">
+        <div style="width:${(d.value/max*100).toFixed(1)}%;height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6);border-radius:6px"></div>
+      </div>
+      <div style="width:38px;text-align:right;color:var(--ink1);font-weight:600">${d.value}%</div>
+    </div>`).join('')+`</div>`;
+}
+function buildSexChart(str){
+  const data=parsePairs(str);
+  if(!data.length)return`<div style="color:var(--ink3);font-size:12px">Sem dados</div>`;
+  const colors=['#ec4899','#3b82f6','#10b981'];
+  const total=data.reduce((a,b)=>a+b.value,0)||100;
+  let acc=0;const R=52,C=2*Math.PI*R;
+  const segs=data.map((d,i)=>{
+    const frac=d.value/total,len=frac*C,off=C-acc*C;acc+=frac;
+    return`<circle cx="70" cy="70" r="${R}" fill="none" stroke="${colors[i%3]}" stroke-width="22" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${off}" transform="rotate(-90 70 70)"/>`;
+  }).join('');
+  const legend=data.map((d,i)=>`<div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="width:10px;height:10px;border-radius:2px;background:${colors[i%3]}"></span><span style="color:var(--ink2)">${d.label}</span><strong style="margin-left:auto;color:var(--ink1)">${d.value}%</strong></div>`).join('');
+  return`<div style="display:flex;flex-direction:column;align-items:center;gap:10px"><svg width="140" height="140" viewBox="0 0 140 140">${segs}</svg><div style="width:100%;display:flex;flex-direction:column;gap:4px">${legend}</div></div>`;
+}
+function buildCitiesChart(str){
+  if(!str||str==='—')return`<div style="color:var(--ink3);font-size:12px">Sem dados</div>`;
+  const cities=str.split('|').map(s=>s.trim()).filter(Boolean);
+  const colors=['#f59e0b','#ef4444','#8b5cf6','#14b8a6','#0ea5e9'];
+  return`<div style="display:flex;flex-direction:column;gap:8px">`+cities.map((c,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;font-size:12px">
+      <div style="width:22px;height:22px;border-radius:50%;background:${colors[i%5]};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0">${i+1}</div>
+      <div style="color:var(--ink1);font-weight:500">${c}</div>
+    </div>`).join('')+`</div>`;
 }
 
 function buildTopPorMetrica(posts, campo, label) {
@@ -693,16 +719,9 @@ function buildTopPorMetrica(posts, campo, label) {
   const medalhas = ['🥇','🥈','🥉'];
   const classes = ['gold','silver','bronze'];
   return sorted.slice(0,3).map((p,i) => {
-    const titulo = (p.legenda || p.idCliente || '—').substring(0, 55);
-    const link = p.linkPost
-      ? `<a class="rank-id post-link" href="${p.linkPost}" target="_blank" rel="noopener">${titulo}</a>`
-      : `<span class="rank-id">${titulo}</span>`;
     return `<div class="rank-card ${classes[i]}">
       <div class="medal">${medalhas[i]}</div>
-      <div class="rank-info">
-        ${link}
-        <div class="rank-plat">${p.plataforma || '—'}</div>
-      </div>
+      ${getPostLabel(p)}
       <div class="rank-stats">
         <div class="rank-stat">
           <div class="rank-stat-val">${fmt(p[campo]||0)}</div>
@@ -723,10 +742,7 @@ function buildTopRanking(posts) {
   return '<div class="ranking">'+sorted.slice(0,5).map((p,i)=>`
     <div class="rank-card ${medals[i]}">
       <div class="medal">${icons[i]}</div>
-      <div class="rank-info">
-        ${getPostLabel(p)}
-        <div class="rank-plat">${p.plataforma || '—'}</div>
-      </div>
+      ${getPostLabel(p)}
       <div class="rank-stats">
         <div class="rank-stat"><div class="rank-stat-val">${fmt(p.engajamentoTotal || 0)}</div><div class="rank-stat-lbl">Engaj.</div></div>
         <div class="rank-stat"><div class="rank-stat-val">${fmt(p.alcance || 0)}</div><div class="rank-stat-lbl">Alcance</div></div>
@@ -742,10 +758,7 @@ function buildWorstRanking(posts) {
   return '<div class="ranking">'+sorted.slice(0,5).map((p,i)=>`
     <div class="rank-card worst">
       <div class="medal">${icons[i] || '•'}</div>
-      <div class="rank-info">
-        ${getPostLabel(p)}
-        <div class="rank-plat">${p.plataforma || '—'}</div>
-      </div>
+      ${getPostLabel(p)}
       <div class="rank-stats">
         <div class="rank-stat"><div class="rank-stat-val">${fmt(p.engajamentoTotal || 0)}</div><div class="rank-stat-lbl">Engaj.</div></div>
         <div class="rank-stat"><div class="rank-stat-val">${fmt(p.alcance || 0)}</div><div class="rank-stat-lbl">Alcance</div></div>
@@ -755,31 +768,50 @@ function buildWorstRanking(posts) {
   `).join('')+'</div>';
 }
 
+
 // ─────────────────────────────────────────────
-// SWOT
+// Performance por tipo de conteúdo
 // ─────────────────────────────────────────────
-function buildSwot(swot) {
-  if(!swot) return '<div class="swot-loading">Gerando análise…</div>';
-  return '<div class="swot-grid">'+
-    [['s','S','Forças'],['w','W','Fraquezas'],['o','O','Oportunidades'],['t','T','Ameaças']]
-    .map(([k,l,n])=>`<div class="swot-cell ${k}"><div class="swot-letter">${l}</div><div class="swot-label">${n}</div><div class="swot-content">${swot[k]||'—'}</div></div>`)
-    .join('')+'</div>';
+function buildPerformancePorTipo(posts) {
+  const tipos = {};
+  posts.forEach(p => {
+    const t = p.tipoConteudo || 'Não definido';
+    if (!tipos[t]) tipos[t] = { engajamento: 0, alcance: 0, taxa: 0, count: 0 };
+    tipos[t].engajamento += p.engajamentoTotal || 0;
+    tipos[t].alcance     += p.alcance || 0;
+    tipos[t].taxa        += p.taxa || 0;
+    tipos[t].count       += 1;
+  });
+
+  const cores = {
+    'Reels':     '#E8593C',
+    'Carrossel': '#534AB7',
+    'Foto':      '#457B9D',
+    'Stories':   '#2D6A4F',
+  };
+
+  return Object.entries(tipos).map(([tipo, d]) => {
+    const taxaMedia = d.count > 0 ? (d.taxa / d.count).toFixed(1) : '0';
+    const cor = cores[tipo] || '#888780';
+    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--border)">
+      <div style="width:10px;height:10px;border-radius:50%;background:${cor};flex-shrink:0"></div>
+      <div style="flex:1;font-size:13px;color:var(--ink);font-weight:500">${tipo}</div>
+      <div style="font-size:12px;color:var(--ink2)">${d.count} posts</div>
+      <div style="font-size:13px;font-weight:500;color:var(--ink);min-width:60px;text-align:right">Taxa ${taxaMedia}%</div>
+      <div style="font-size:12px;color:var(--ink2);min-width:70px;text-align:right">Alcance ${fmt(d.alcance)}</div>
+    </div>`;
+  }).join('');
 }
 
 // ─────────────────────────────────────────────
 // Renderiza o dashboard completo
 // ─────────────────────────────────────────────
-function renderDashboard(agg, insight) {
+function renderDashboard(agg) {
   document.getElementById('client-name').innerHTML =
     `${agg.idCliente} — <em>${agg.mes}</em>`;
   document.getElementById('header-sub').textContent =
     `Relatório de redes sociais · ${agg.totalPosts} posts analisados`;
 
-  const insightHtml = insight ? `
-    <div class="insight-box">
-      <div class="insight-icon">✦</div>
-      <div class="insight-text"><strong>Insight do mês:</strong> ${insight}</div>
-    </div>` : '';
 
   document.getElementById('dashboard-content').innerHTML = `
 
@@ -832,6 +864,38 @@ function renderDashboard(agg, insight) {
     </div>
 
     <div class="card" style="margin-bottom:14px">
+      <div class="card-title">Métricas de qualidade</div>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:4px">
+        <div style="background:var(--bg);border-radius:var(--radius);padding:1rem;text-align:center">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:8px">Taxa de salvamento</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink)">${agg.mediaTaxaSalvamento.toFixed(2)}%</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:4px">salvamentos ÷ alcance</div>
+        </div>
+        <div style="background:var(--bg);border-radius:var(--radius);padding:1rem;text-align:center">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:8px">Taxa de comentário</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink)">${agg.mediaTaxaComentario.toFixed(2)}%</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:4px">comentários ÷ alcance</div>
+        </div>
+        <div style="background:var(--bg);border-radius:var(--radius);padding:1rem;text-align:center">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:8px">Taxa de compartilhamento</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink)">${agg.mediaTaxaCompartilhamento.toFixed(2)}%</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:4px">compartilhamentos ÷ alcance</div>
+        </div>
+        <div style="background:var(--bg);border-radius:var(--radius);padding:1rem;text-align:center">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:8px">Ratio views/alcance</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink)">${agg.mediaRatioViews.toFixed(1)}x</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:4px">acima de 2x = ótimo</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">Performance por tipo de conteúdo</div>
+      <div style="margin-top:4px">${buildPerformancePorTipo(agg.posts)}</div>
+      <div style="font-size:11px;color:var(--ink3);margin-top:12px">Preencha o campo "Tipo de conteúdo" no Notion para ver dados aqui: Reels / Carrossel / Foto / Stories</div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
       <div class="card-title">Top 3 por curtidas</div>
       <div class="ranking">${buildTopPorMetrica(agg.posts,'curtidas','Curtidas')}</div>
     </div>
@@ -850,28 +914,21 @@ function renderDashboard(agg, insight) {
 
     <div class="card" style="margin-bottom:14px">
       <div class="card-title">Audiência do mês</div>
-      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;font-size:13px;color:var(--ink2)">
+      <div style="display:grid;grid-template-columns:1.3fr 0.9fr 1.1fr;gap:24px;align-items:start">
         <div>
-          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:8px">Faixa etária</div>
-          <div style="line-height:1.7">${agg.segFaixaEtaria}</div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:12px">Faixa etária</div>
+          ${buildAgeChart(agg.segFaixaEtaria)}
         </div>
         <div>
-          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:8px">Sexo</div>
-          <div style="line-height:1.7">${agg.segSexo}</div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:12px">Sexo</div>
+          ${buildSexChart(agg.segSexo)}
         </div>
         <div>
-          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:8px">Top cidades</div>
-          <div style="line-height:1.7">${agg.segCidades}</div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:12px">Top cidades</div>
+          ${buildCitiesChart(agg.segCidades)}
         </div>
       </div>
     </div>
-
-    <div class="card" id="swot-card" style="margin-top:14px">
-      <div class="card-title">Análise SWOT dos posts</div>
-      <div id="swot-content">${buildSwot(null)}</div>
-    </div>
-
-    ${insightHtml}
 
     <div class="footer">
       <span>Cliente: <strong>${agg.idCliente}</strong></span>
@@ -900,29 +957,7 @@ async function loadDashboard() {
 
     document.getElementById('client-name').innerHTML =
       `${agg.idCliente} — <em>${mes}</em>`;
-    renderDashboard(agg, null);
-
-    // Busca insight + SWOT do Claude em background
-    fetchInsightAndSwot(agg).then(result => {
-      const swotEl = document.getElementById('swot-content');
-      if (!result) {
-        if (swotEl) swotEl.innerHTML = '<div class="swot-loading">Análise indisponível no momento.</div>';
-        return;
-      }
-      if (swotEl) swotEl.innerHTML = buildSwot(result.swot);
-      if (result.insight) {
-        const box = document.querySelector('.insight-box');
-        if (!box) {
-          const footer = document.querySelector('.footer');
-          const div = document.createElement('div');
-          div.innerHTML = `<div class="insight-box" style="margin-top:14px">
-            <div class="insight-icon">✦</div>
-            <div class="insight-text"><strong>Insight do mês:</strong> ${result.insight}</div>
-          </div>`;
-          footer?.parentNode?.insertBefore(div.firstChild, footer);
-        }
-      }
-    });
+    renderDashboard(agg);
 
   } catch(err) {
     document.getElementById('dashboard-content').innerHTML =
