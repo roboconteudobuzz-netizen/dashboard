@@ -596,7 +596,9 @@ body { background: var(--grey); overflow-x: hidden; }
     <i class='bx bx-menu' id="menu-toggle"></i>
 
     <div class="month-wrap">
-      <i class='bx bx-calendar' style="color:var(--dark-grey);font-size:18px"></i>
+      <i class='bx bxs-user-pin' style="color:var(--dark-grey);font-size:18px"></i>
+      <select class="month-select" id="client-select" onchange="onClientChange()"></select>
+      <i class='bx bx-calendar' style="color:var(--dark-grey);font-size:18px;margin-left:8px"></i>
       <select class="month-select" id="month-select" onchange="loadDashboard()"></select>
     </div>
 
@@ -702,8 +704,31 @@ function populateMonths() {
   });
 }
 
-// ── Cliente da URL ──
-const CLIENT_ID = new URLSearchParams(window.location.search).get('cliente');
+// ── Cliente ──
+let CLIENT_ID = new URLSearchParams(window.location.search).get('cliente');
+
+async function populateClients() {
+  const res = await fetch(`/api/notion/schema?databaseId=${CONFIG.databaseId}`);
+  if (!res.ok) return;
+  const schema = await res.json();
+  const options = schema.properties?.[FIELDS.idCliente]?.select?.options ?? [];
+  const sel = document.getElementById('client-select');
+  options.forEach(opt => {
+    const o = document.createElement('option');
+    o.value = opt.name; o.textContent = opt.name;
+    if (opt.name === CLIENT_ID) o.selected = true;
+    sel.appendChild(o);
+  });
+  if (!CLIENT_ID) {
+    CLIENT_ID = 'NAH-01';
+    sel.value = CLIENT_ID;
+  }
+}
+
+function onClientChange() {
+  CLIENT_ID = document.getElementById('client-select').value;
+  loadDashboard();
+}
 
 // ── Notion API ──
 async function fetchNotionData(mes) {
@@ -1162,7 +1187,7 @@ if (!pages.length) {
 }
 
 populateMonths();
-loadDashboard();
+populateClients().then(() => loadDashboard());
 </script>
 </body>
 </html>

@@ -45,6 +45,27 @@ const server = http.createServer(async (req, res) => {
       return res.end();
     }
 
+    if (req.method === 'GET' && req.url.startsWith('/api/notion/schema')) {
+      if (!NOTION_TOKEN) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'missing_env', message: 'NOTION_TOKEN não configurado' }));
+      }
+      const dbId = new URL(req.url, 'http://localhost').searchParams.get('databaseId') || DATABASE_ID;
+      if (!dbId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'missing_database_id' }));
+      }
+      return proxy(res, {
+        hostname: 'api.notion.com',
+        path: `/v1/databases/${dbId}`,
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${NOTION_TOKEN}`,
+          'Notion-Version': '2022-06-28',
+        },
+      });
+    }
+
     if (req.method === 'POST' && req.url === '/api/notion') {
       if (!NOTION_TOKEN) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
