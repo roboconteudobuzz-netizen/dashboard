@@ -10,13 +10,42 @@
 
 const meta   = require('./meta');
 const notion = require('./notion');
+const path   = require('path');
 
-// ── Carregar agências: variáveis de ambiente (Railway) ou agencies.json (local) ──
-let agencies;
-try {
+// ── Carregar agências ──
+async function loadAgencies() {
+  // Modo banco de dados (Railway com OAuth configurado)
+  if (process.env.DATABASE_URL) {
+    const db = require(path.join(__dirname, '..', 'db'));
+    const clients = await db.getAllClients();
+    if (clients.length) {
+      console.log(`   📋 ${clients.length} cliente(s) carregado(s) do banco`);
+      // Agrupar por notion_database_id (uma "agência" por database)
+      const agencyMap = {};
+      for (const c of clients) {
+        const key = c.notion_database_id;
+        if (!agencyMap[key]) {
+          agencyMap[key] = {
+            id: key,
+            name: 'Agência',
+            notionToken: c.notion_token,
+            notionDatabaseId: c.notion_database_id,
+            clients: [],
+          };
+        }
+        agencyMap[key].clients.push({
+          id: c.notion_client_id,
+          metaAccessToken: c.access_token,
+          instagramAccountId: c.instagram_account_id,
+        });
+      }
+      return Object.values(agencyMap);
+    }
+  }
+
+  // Modo variáveis de ambiente (Railway sem OAuth ainda)
   if (process.env.META_ACCESS_TOKEN) {
-    // Modo Railway — lê das variáveis de ambiente
-    agencies = [{
+    return [{
       id: 'buzz-media',
       name: 'Buzz Media',
       metaAccessToken: process.env.META_ACCESS_TOKEN,
@@ -29,13 +58,15 @@ try {
         { id: 'MODELO' },
       ],
     }];
-  } else {
-    // Modo local — lê do agencies.json
-    agencies = require('./agencies.json');
   }
-} catch (e) {
-  console.error('❌ Nenhuma configuração de agência encontrada.');
-  process.exit(1);
+
+  // Modo local — lê do agencies.json
+  try {
+    return require('./agencies.json');
+  } catch {
+    console.error('❌ Nenhuma configuração de agência encontrada.');
+    process.exit(1);
+  }
 }
 
 // ── Mapear nome do mês para número ──
@@ -117,11 +148,70 @@ function formatDemographics(accountInsights) {
   return { segSexo, segIdade, segCidades };
 }
 
+// ── Coletar dados de um cliente específico (com token próprio) ──
+async function collectClient(client, agency, mesConfig) {
+  const token = client.metaAccessToken || agency.metaAccessToken;
+
+  // Se o cliente já tem igAccountId salvo no banco, usa direto
+  let igAccountId, pageAccessToken;
+  if (client.instagramAccountId) {
+    igAccountId = client.instagramAccountId;
+    pageAccessToken = token;
+  } else {
+    const result = await meta.getInstagramAccountId(token);
+    igAccountId = result.igAccountId;
+    pageAccessToken = result.pageAccessToken;
+  }
+
+  return { igAccountId, pageAccessToken };
+}
+
 // ── Coletar dados de uma agência ──
 async function collectAgency(agency, mesConfig) {
   console.log(`\n📦 Agência: ${agency.name}`);
   console.log(`   Mês: ${mesConfig.label}`);
 
+  // Se cada cliente tem token próprio (modo banco), coletar por cliente
+  const hasPerClientTokens = agency.clients.some(c => c.metaAccessToken);
+
+  if (hasPerClientTokens) {
+    let created = 0, updated = 0, errors = 0;
+    for (const client of agency.clients) {
+      console.log(`\n   👤 Cliente: ${client.id}`);
+      try {
+        const { igAccountId, pageAccessToken } = await collectClient(client, agency, mesConfig);
+        console.log(`   ✅ Instagram ID: ${igAccountId}`);
+
+        const [{ followersCount }, accountInsights] = await Promise.all([
+          meta.getFollowersCount(igAccountId, pageAccessToken),
+          meta.getAccountInsights(igAccountId, pageAccessToken, mesConfig.year, mesConfig.month),
+        ]);
+        const demographics = formatDemographics(accountInsights);
+
+        const posts = await meta.getPostsByMonth(igAccountId, pageAccessToken, mesConfig.year, mesConfig.month);
+        console.log(`   ✅ ${posts.length} posts encontrados`);
+
+        for (const post of posts) {
+          process.stdout.write(`   📊 Post ${post.id}... `);
+          try {
+            const insights = await meta.getPostInsights(post.id, post.media_type, pageAccessToken);
+            const enriched = { ...post, insights, followersCount, ...demographics };
+            const result = await notion.upsertPost(agency.notionDatabaseId, agency.notionToken, enriched, client.id, mesConfig.label);
+            if (result.action === 'created') created++; else updated++;
+            console.log('✅');
+          } catch (e) { console.log(`❌ ${e.message}`); errors++; }
+          await new Promise(r => setTimeout(r, 300));
+        }
+      } catch (e) {
+        console.error(`   ❌ Erro no cliente ${client.id}: ${e.message}`);
+        errors++;
+      }
+    }
+    console.log(`\n   📈 Resultado: ${created} criados | ${updated} atualizados | ${errors} erros`);
+    return;
+  }
+
+  // Modo token único da agência (variáveis de ambiente)
   // 1. Buscar conta Instagram
   console.log('   🔍 Buscando conta Instagram...');
   const { igAccountId, pageAccessToken } = await meta.getInstagramAccountId(agency.metaAccessToken);
@@ -201,7 +291,8 @@ async function main() {
     process.exit(1);
   }
 
-  // Filtrar agências se --agencia foi passado
+  // Carregar e filtrar agências
+  const agencies = await loadAgencies();
   const targets = agenciaArg
     ? agencies.filter(a => a.id === agenciaArg)
     : agencies;

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conectar Instagram — BuzzMedia Dashboard</title>
+<link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f0f4f8;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .container {
+    background: #fff;
+    border-radius: 20px;
+    padding: 48px 40px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+  .logo {
+    font-size: 48px;
+    color: #3C91E6;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 36px;
+    line-height: 1.5;
+  }
+  .form-group {
+    text-align: left;
+    margin-bottom: 20px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 6px;
+  }
+  select, input {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #333;
+    outline: none;
+    transition: border .2s;
+    background: #fafafa;
+  }
+  select:focus, input:focus { border-color: #3C91E6; background: #fff; }
+
+  .btn {
+    width: 100%;
+    height: 48px;
+    background: #3C91E6;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: background .2s;
+    margin-top: 8px;
+  }
+  .btn:hover { background: #2d7dd2; }
+  .btn i { font-size: 20px; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 32px 0;
+  }
+
+  .connected-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: 16px;
+    text-align: left;
+  }
+  .client-list { text-align: left; }
+  .client-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #f0f9f4;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #2d6a4f;
+    font-weight: 500;
+  }
+  .client-item i { font-size: 18px; }
+  .empty { font-size: 13px; color: #aaa; text-align: left; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo"><i class='bx bxs-bar-chart-alt-2'></i></div>
+  <h1>Conectar Instagram</h1>
+  <p class="subtitle">Autorize o acesso ao Instagram da sua conta para que o dashboard colete as métricas automaticamente.</p>
+
+  <div class="form-group">
+    <label for="cliente">ID do cliente no Notion</label>
+    <input type="text" id="cliente" placeholder="Ex: NAH-01, PETROMASTER..." />
+  </div>
+
+  <button class="btn" onclick="conectar()">
+    <i class='bx bxl-instagram'></i>
+    Conectar com Instagram
+  </button>
+
+  <hr class="divider">
+
+  <div class="connected-title">Contas conectadas</div>
+  <div class="client-list" id="client-list">
+    <div class="empty">Carregando...</div>
+  </div>
+</div>
+
+<script>
+  async function conectar() {
+    const cliente = document.getElementById('cliente').value.trim();
+    if (!cliente) {
+      alert('Por favor, informe o ID do cliente no Notion.');
+      return;
+    }
+    window.location.href = `/auth/instagram?cliente=${encodeURIComponent(cliente)}`;
+  }
+
+  async function loadClients() {
+    try {
+      const res = await fetch('/api/clients');
+      const clients = await res.json();
+      const list = document.getElementById('client-list');
+      if (!clients.length) {
+        list.innerHTML = '<div class="empty">Nenhuma conta conectada ainda.</div>';
+        return;
+      }
+      list.innerHTML = clients.map(c => `
+        <div class="client-item">
+          <i class='bx bxs-check-circle'></i>
+          <span><strong>${c.id}</strong> — ${c.name}</span>
+        </div>
+      `).join('');
+    } catch {
+      document.getElementById('client-list').innerHTML = '<div class="empty">Erro ao carregar clientes.</div>';
+    }
+  }
+
+  loadClients();
+</script>
+</body>
+</html>
