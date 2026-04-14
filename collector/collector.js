@@ -10,7 +10,33 @@
 
 const meta   = require('./meta');
 const notion = require('./notion');
-const agencies = require('./agencies.json');
+
+// ── Carregar agências: variáveis de ambiente (Railway) ou agencies.json (local) ──
+let agencies;
+try {
+  if (process.env.META_ACCESS_TOKEN) {
+    // Modo Railway — lê das variáveis de ambiente
+    agencies = [{
+      id: 'buzz-media',
+      name: 'Buzz Media',
+      metaAccessToken: process.env.META_ACCESS_TOKEN,
+      notionToken: process.env.NOTION_TOKEN,
+      notionDatabaseId: process.env.NOTION_DATABASE_ID,
+      clients: [
+        { id: 'NAH-01' },
+        { id: 'PETROMASTER' },
+        { id: 'ESTÂNCIA LOPES' },
+        { id: 'MODELO' },
+      ],
+    }];
+  } else {
+    // Modo local — lê do agencies.json
+    agencies = require('./agencies.json');
+  }
+} catch (e) {
+  console.error('❌ Nenhuma configuração de agência encontrada.');
+  process.exit(1);
+}
 
 // ── Mapear nome do mês para número ──
 const MESES = {
