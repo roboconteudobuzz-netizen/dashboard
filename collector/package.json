@@ -1,0 +1,11 @@
+{
+  "name": "dashboard-collector",
+  "version": "1.0.0",
+  "description": "Coleta métricas do Instagram via Meta Graph API e insere no Notion",
+  "main": "collector.js",
+  "scripts": {
+    "collect": "node collector.js",
+    "collect:mes": "node collector.js --mes"
+  },
+  "dependencies": {}
+}

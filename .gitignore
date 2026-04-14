@@ -2,3 +2,4 @@
 node_modules/
 post-covers/
 .claude/
+collector/agencies.json
