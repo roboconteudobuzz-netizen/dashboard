@@ -26,8 +26,37 @@ async function setup() {
       created_at           TIMESTAMP DEFAULT NOW(),
       updated_at           TIMESTAMP DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS pending_connections (
+      token       VARCHAR(64) PRIMARY KEY,
+      pages       JSONB NOT NULL,
+      created_at  TIMESTAMP DEFAULT NOW()
+    );
   `);
   console.log('✅ Banco de dados pronto');
+}
+
+// ── Salvar conexão pendente (aguardando mapeamento) ──
+async function savePending(token, pages) {
+  await pool.query(
+    `INSERT INTO pending_connections (token, pages) VALUES ($1, $2)
+     ON CONFLICT (token) DO UPDATE SET pages = $2, created_at = NOW()`,
+    [token, JSON.stringify(pages)]
+  );
+}
+
+// ── Buscar conexão pendente ──
+async function getPending(token) {
+  const result = await pool.query(
+    'SELECT pages FROM pending_connections WHERE token = $1 AND created_at > NOW() - INTERVAL \'30 minutes\'',
+    [token]
+  );
+  return result.rows[0]?.pages ?? null;
+}
+
+// ── Deletar conexão pendente ──
+async function deletePending(token) {
+  await pool.query('DELETE FROM pending_connections WHERE token = $1', [token]);
 }
 
 // ── Salvar ou atualizar cliente ──
@@ -71,4 +100,4 @@ async function getClientByNotionId(notionClientId) {
   return result.rows[0] ?? null;
 }
 
-module.exports = { setup, upsertClient, getAllClients, getClientByNotionId };
+module.exports = { setup, savePending, getPending, deletePending, upsertClient, getAllClients, getClientByNotionId };

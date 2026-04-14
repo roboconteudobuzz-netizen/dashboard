@@ -108,22 +108,17 @@ const server = http.createServer(async (req, res) => {
     // ── OAUTH: callback do Facebook ──
     if (req.method === 'GET' && url.pathname === '/auth/callback') {
       const code  = url.searchParams.get('code');
-      const state = url.searchParams.get('state');
       const error = url.searchParams.get('error');
 
       if (error) {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        return res.end(`<h2>❌ Autorização cancelada</h2><p>${url.searchParams.get('error_description') || error}</p>`);
+        res.writeHead(302, { Location: `/onboarding?erro=${encodeURIComponent(url.searchParams.get('error_description') || error)}` });
+        return res.end();
       }
 
       if (!code) {
-        res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
-        return res.end('<h2>❌ Código de autorização não encontrado</h2>');
+        res.writeHead(302, { Location: '/onboarding?erro=Código+não+encontrado' });
+        return res.end();
       }
-
-      // Decodificar state
-      let notionClientId = '';
-      try { notionClientId = JSON.parse(Buffer.from(state, 'base64').toString()).notionClientId; } catch {}
 
       // 1. Trocar código por token de usuário
       const tokenData = await httpsPost('graph.facebook.com',
@@ -132,56 +127,89 @@ const server = http.createServer(async (req, res) => {
       );
 
       if (tokenData.error) {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        return res.end(`<h2>❌ Erro ao obter token</h2><p>${tokenData.error.message}</p>`);
+        res.writeHead(302, { Location: `/onboarding?erro=${encodeURIComponent(tokenData.error.message)}` });
+        return res.end();
       }
 
       const userToken = tokenData.access_token;
 
-      // 2. Buscar páginas e tokens de página (permanentes)
-      const pages = await httpsGet(`https://graph.facebook.com/v21.0/me/accounts?access_token=${userToken}`);
+      // 2. Buscar páginas com tokens permanentes
+      const pagesData = await httpsGet(`https://graph.facebook.com/v21.0/me/accounts?access_token=${userToken}`);
 
-      if (!pages.data?.length) {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        return res.end('<h2>❌ Nenhuma Página do Facebook encontrada</h2><p>Verifique se o Instagram está vinculado a uma Página do Facebook.</p>');
+      if (!pagesData.data?.length) {
+        res.writeHead(302, { Location: '/onboarding?erro=Nenhuma+Página+do+Facebook+encontrada' });
+        return res.end();
       }
 
-      // 3. Para cada página, buscar Instagram vinculado e salvar no banco
-      let saved = 0;
-      for (const page of pages.data) {
+      // 3. Para cada página, verificar se tem Instagram vinculado
+      const pagesWithIg = [];
+      for (const page of pagesData.data) {
         const igData = await httpsGet(
           `https://graph.facebook.com/v21.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
         );
         const igId = igData.instagram_business_account?.id;
         if (!igId) continue;
+        pagesWithIg.push({
+          pageId: page.id,
+          pageName: page.name,
+          accessToken: page.access_token,
+          instagramAccountId: igId,
+        });
+      }
 
-        if (db) {
-          await db.upsertClient({
-            notionClientId: notionClientId || page.name,
-            pageId: page.id,
-            pageName: page.name,
-            accessToken: page.access_token,
-            instagramAccountId: igId,
-            notionDatabaseId: process.env.NOTION_DATABASE_ID || DATABASE_ID,
-            notionToken: NOTION_TOKEN,
-          });
-        }
+      if (!pagesWithIg.length) {
+        res.writeHead(302, { Location: '/onboarding?erro=Nenhuma+conta+Instagram+Business+vinculada+encontrada' });
+        return res.end();
+      }
+
+      // 4. Salvar como pendente e redirecionar para mapeamento
+      const token = require('crypto').randomBytes(24).toString('hex');
+      if (db) await db.savePending(token, pagesWithIg);
+
+      res.writeHead(302, { Location: `/onboarding?step=mapping&token=${token}` });
+      return res.end();
+    }
+
+    // ── API: buscar páginas pendentes para mapeamento ──
+    if (req.method === 'GET' && url.pathname === '/api/pending') {
+      const token = url.searchParams.get('token');
+      if (!token || !db) { res.writeHead(400); return res.end(JSON.stringify({ error: 'invalid' })); }
+      const pages = await db.getPending(token);
+      if (!pages) { res.writeHead(404); return res.end(JSON.stringify({ error: 'not_found_or_expired' })); }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify(pages));
+    }
+
+    // ── API: confirmar mapeamento e salvar clientes ──
+    if (req.method === 'POST' && url.pathname === '/api/confirm-mapping') {
+      if (!db) { res.writeHead(503); return res.end(JSON.stringify({ error: 'db_not_available' })); }
+      const body = await readBody(req);
+      const { token, mappings } = JSON.parse(body);
+      // mappings = [{ pageId, notionClientId }]
+
+      const pages = await db.getPending(token);
+      if (!pages) { res.writeHead(404); return res.end(JSON.stringify({ error: 'not_found_or_expired' })); }
+
+      let saved = 0;
+      for (const mapping of mappings) {
+        if (!mapping.notionClientId?.trim()) continue;
+        const page = pages.find(p => p.pageId === mapping.pageId);
+        if (!page) continue;
+        await db.upsertClient({
+          notionClientId: mapping.notionClientId.trim(),
+          pageId: page.pageId,
+          pageName: page.pageName,
+          accessToken: page.accessToken,
+          instagramAccountId: page.instagramAccountId,
+          notionDatabaseId: process.env.NOTION_DATABASE_ID || DATABASE_ID,
+          notionToken: NOTION_TOKEN,
+        });
         saved++;
       }
 
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      return res.end(`
-        <!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-        <title>Conectado!</title>
-        <style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f0f4f8;margin:0}
-        .box{background:#fff;border-radius:16px;padding:40px;text-align:center;max-width:400px;box-shadow:0 4px 20px rgba(0,0,0,0.08)}
-        h2{color:#2d6a4f;margin-bottom:8px}p{color:#666}</style></head>
-        <body><div class="box">
-          <h2>✅ Instagram conectado!</h2>
-          <p>${saved} conta(s) vinculada(s) com sucesso.</p>
-          <p style="margin-top:16px;font-size:13px;color:#999">Pode fechar esta janela.</p>
-        </div></body></html>
-      `);
+      await db.deletePending(token);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ saved }));
     }
 
     // ── API: listar clientes conectados ──
