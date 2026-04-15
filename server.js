@@ -24,6 +24,7 @@ if (process.env.DATABASE_URL) {
   db.setup().catch(e => console.error('Erro ao iniciar banco:', e.message));
 }
 
+// ── Helpers HTTP ──
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let data = '';
@@ -77,6 +78,34 @@ function httpsPost(hostname, path, body) {
   });
 }
 
+// ── Helpers de sessão ──
+function parseCookies(req) {
+  const cookies = {};
+  const header = req.headers.cookie || '';
+  header.split(';').forEach(part => {
+    const [k, ...v] = part.trim().split('=');
+    if (k) cookies[k.trim()] = decodeURIComponent(v.join('='));
+  });
+  return cookies;
+}
+
+async function getSessionAgency(req) {
+  if (!db) return null;
+  const cookies = parseCookies(req);
+  const sessionToken = cookies['session'];
+  if (!sessionToken) return null;
+  return db.getAgencyBySession(sessionToken);
+}
+
+function setSessionCookie(res, sessionToken) {
+  const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+  res.setHeader('Set-Cookie', `session=${sessionToken}; Path=/; HttpOnly; SameSite=Lax; Expires=${expires}`);
+}
+
+function clearSessionCookie(res) {
+  res.setHeader('Set-Cookie', 'session=; Path=/; HttpOnly; Expires=Thu, 01 Jan 1970 00:00:00 GMT');
+}
+
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml' };
 
 const server = http.createServer(async (req, res) => {
@@ -88,19 +117,48 @@ const server = http.createServer(async (req, res) => {
 
     const url = new URL(req.url, BASE_URL);
 
-    // ── ONBOARDING: página HTML ──
+    // ── Dashboard principal: requer sessão ──
+    if (req.method === 'GET' && url.pathname === '/') {
+      const agency = await getSessionAgency(req);
+      if (!agency) {
+        res.writeHead(302, { Location: '/onboarding' });
+        return res.end();
+      }
+      const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      return res.end(html);
+    }
+
+    // ── Página de configurações: requer sessão ──
+    if (req.method === 'GET' && url.pathname === '/configuracoes') {
+      const agency = await getSessionAgency(req);
+      if (!agency) {
+        res.writeHead(302, { Location: '/onboarding' });
+        return res.end();
+      }
+      const html = fs.readFileSync(path.join(__dirname, 'configuracoes.html'), 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      return res.end(html);
+    }
+
+    // ── Onboarding: página de login ──
     if (req.method === 'GET' && url.pathname === '/onboarding') {
       const html = fs.readFileSync(path.join(__dirname, 'onboarding.html'), 'utf8');
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       return res.end(html);
     }
 
+    // ── Logout ──
+    if (req.method === 'GET' && url.pathname === '/logout') {
+      clearSessionCookie(res);
+      res.writeHead(302, { Location: '/onboarding' });
+      return res.end();
+    }
+
     // ── OAUTH: redirecionar para o Facebook ──
     if (req.method === 'GET' && url.pathname === '/auth/instagram') {
-      const notionClientId = url.searchParams.get('cliente') || '';
       const scope = 'pages_show_list,instagram_basic,instagram_manage_insights,pages_read_engagement';
-      const state = Buffer.from(JSON.stringify({ notionClientId })).toString('base64');
-      const authUrl = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${META_APP_ID}&redirect_uri=${encodeURIComponent(CALLBACK_URL)}&scope=${scope}&state=${state}&response_type=code`;
+      const authUrl = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${META_APP_ID}&redirect_uri=${encodeURIComponent(CALLBACK_URL)}&scope=${scope}&response_type=code`;
       res.writeHead(302, { Location: authUrl });
       return res.end();
     }
@@ -133,7 +191,12 @@ const server = http.createServer(async (req, res) => {
 
       const userToken = tokenData.access_token;
 
-      // 2. Buscar páginas com tokens permanentes
+      // 2. Buscar ID e nome do usuário
+      const meData = await httpsGet(`https://graph.facebook.com/v21.0/me?fields=id,name&access_token=${userToken}`);
+      const facebookUserId = meData.id;
+      const facebookUserName = meData.name;
+
+      // 3. Buscar páginas com tokens permanentes
       const pagesData = await httpsGet(`https://graph.facebook.com/v21.0/me/accounts?access_token=${userToken}`);
 
       if (!pagesData.data?.length) {
@@ -141,7 +204,7 @@ const server = http.createServer(async (req, res) => {
         return res.end();
       }
 
-      // 3. Para cada página, verificar se tem Instagram vinculado
+      // 4. Para cada página, verificar se tem Instagram vinculado
       const pagesWithIg = [];
       for (const page of pagesData.data) {
         const igData = await httpsGet(
@@ -157,38 +220,150 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
-      if (!pagesWithIg.length) {
-        res.writeHead(302, { Location: '/onboarding?erro=Nenhuma+conta+Instagram+Business+vinculada+encontrada' });
-        return res.end();
+      // 5. Criar sessão e salvar agência
+      const sessionToken = require('crypto').randomBytes(24).toString('hex');
+      if (db) {
+        await db.upsertAgency(facebookUserId, facebookUserName, sessionToken);
+        if (pagesWithIg.length) {
+          const pendingToken = require('crypto').randomBytes(24).toString('hex');
+          await db.savePendingForAgency(facebookUserId, pendingToken, pagesWithIg);
+        }
       }
 
-      // 4. Salvar como pendente e redirecionar para mapeamento
-      const token = require('crypto').randomBytes(24).toString('hex');
-      if (db) await db.savePending(token, pagesWithIg);
-
-      res.writeHead(302, { Location: `/onboarding?step=mapping&token=${token}` });
+      setSessionCookie(res, sessionToken);
+      res.writeHead(302, { Location: '/configuracoes' });
       return res.end();
     }
 
-    // ── API: buscar páginas pendentes para mapeamento ──
-    if (req.method === 'GET' && url.pathname === '/api/pending') {
-      const token = url.searchParams.get('token');
-      if (!token || !db) { res.writeHead(400); return res.end(JSON.stringify({ error: 'invalid' })); }
-      const pages = await db.getPending(token);
-      if (!pages) { res.writeHead(404); return res.end(JSON.stringify({ error: 'not_found_or_expired' })); }
+    // ══════════════════════════════════════════
+    //  API: AGENCY
+    // ══════════════════════════════════════════
+
+    // GET /api/agency/settings — retorna configurações da agência logada
+    if (req.method === 'GET' && url.pathname === '/api/agency/settings') {
+      const agency = await getSessionAgency(req);
+      if (!agency) { res.writeHead(401); return res.end(JSON.stringify({ error: 'unauthorized' })); }
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify(pages));
+      return res.end(JSON.stringify({
+        name: agency.facebook_user_name,
+        notionToken: agency.notion_token || '',
+        notionDatabaseId: agency.notion_database_id || '',
+        hasNotion: !!(agency.notion_token && agency.notion_database_id),
+      }));
+    }
+
+    // POST /api/agency/settings — salva configurações do Notion
+    if (req.method === 'POST' && url.pathname === '/api/agency/settings') {
+      const agency = await getSessionAgency(req);
+      if (!agency) { res.writeHead(401); return res.end(JSON.stringify({ error: 'unauthorized' })); }
+      const body = JSON.parse(await readBody(req));
+      const { notionToken, notionDatabaseId } = body;
+      if (!notionToken || !notionDatabaseId) {
+        res.writeHead(400); return res.end(JSON.stringify({ error: 'Campos obrigatórios faltando' }));
+      }
+      // Validar token consultando o banco do Notion
+      const testResult = await httpsGet(
+        `https://api.notion.com/v1/databases/${notionDatabaseId.trim()}`
+      ).catch(() => null);
+      // Fazemos via fetch com auth header — reescrevendo com https
+      const notionCheck = await new Promise(resolve => {
+        const r = https.request({
+          hostname: 'api.notion.com',
+          path: `/v1/databases/${notionDatabaseId.trim()}`,
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${notionToken.trim()}`, 'Notion-Version': '2022-06-28' },
+        }, resp => {
+          let d = ''; resp.on('data', c => d += c); resp.on('end', () => {
+            try { resolve(JSON.parse(d)); } catch { resolve(null); }
+          });
+        });
+        r.on('error', () => resolve(null));
+        r.end();
+      });
+      if (!notionCheck || notionCheck.object === 'error') {
+        res.writeHead(400);
+        return res.end(JSON.stringify({ error: notionCheck?.message || 'Token ou Database ID inválido' }));
+      }
+      await db.updateAgencyNotion(agency.facebook_user_id, notionToken.trim(), notionDatabaseId.trim());
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: true }));
+    }
+
+    // GET /api/agency/pages — retorna páginas pendentes + já mapeadas
+    if (req.method === 'GET' && url.pathname === '/api/agency/pages') {
+      const agency = await getSessionAgency(req);
+      if (!agency) { res.writeHead(401); return res.end(JSON.stringify({ error: 'unauthorized' })); }
+
+      // Páginas ainda não mapeadas (pendentes do OAuth)
+      const pending = await db.getPendingByAgency(agency.facebook_user_id);
+      const pendingPages = pending?.pages || [];
+
+      // Páginas já mapeadas
+      const mapped = await db.getClientsByAgency(agency.facebook_user_id);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({
+        pendingToken: pending?.token || null,
+        pending: pendingPages,
+        mapped: mapped.map(c => ({
+          pageId: c.page_id,
+          pageName: c.page_name,
+          instagramAccountId: c.instagram_account_id,
+          notionClientId: c.notion_client_id,
+        })),
+      }));
+    }
+
+    // GET /api/notion/clients — retorna opções de ID CLIENTE do Notion (para dropdown)
+    if (req.method === 'GET' && url.pathname === '/api/notion/clients') {
+      const agency = await getSessionAgency(req);
+      const nToken = agency?.notion_token || NOTION_TOKEN;
+      const nDbId  = agency?.notion_database_id || DATABASE_ID;
+      if (!nToken || !nDbId) { res.writeHead(400); return res.end(JSON.stringify({ error: 'notion_not_configured' })); }
+
+      const schema = await new Promise(resolve => {
+        const r = https.request({
+          hostname: 'api.notion.com', path: `/v1/databases/${nDbId}`, method: 'GET',
+          headers: { 'Authorization': `Bearer ${nToken}`, 'Notion-Version': '2022-06-28' },
+        }, resp => {
+          let d = ''; resp.on('data', c => d += c); resp.on('end', () => {
+            try { resolve(JSON.parse(d)); } catch { resolve(null); }
+          });
+        });
+        r.on('error', () => resolve(null));
+        r.end();
+      });
+
+      if (!schema || schema.object === 'error') {
+        res.writeHead(500); return res.end(JSON.stringify({ error: 'Erro ao buscar schema do Notion' }));
+      }
+
+      // Procura a propriedade de tipo select que tem o ID do cliente
+      let clients = [];
+      for (const [name, prop] of Object.entries(schema.properties || {})) {
+        if (prop.type === 'select' && (name.includes('CLIENTE') || name.includes('Cliente') || name.includes('cliente') || name === 'ID CLIENTE')) {
+          clients = (prop.select?.options || []).map(o => ({ id: o.name, name: o.name }));
+          break;
+        }
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify(clients));
     }
 
     // ── API: confirmar mapeamento e salvar clientes ──
     if (req.method === 'POST' && url.pathname === '/api/confirm-mapping') {
       if (!db) { res.writeHead(503); return res.end(JSON.stringify({ error: 'db_not_available' })); }
+
+      const agency = await getSessionAgency(req);
       const body = await readBody(req);
       const { token, mappings } = JSON.parse(body);
-      // mappings = [{ pageId, notionClientId }]
 
       const pages = await db.getPending(token);
       if (!pages) { res.writeHead(404); return res.end(JSON.stringify({ error: 'not_found_or_expired' })); }
+
+      const nToken = agency?.notion_token || NOTION_TOKEN;
+      const nDbId  = agency?.notion_database_id || (process.env.NOTION_DATABASE_ID || DATABASE_ID);
 
       let saved = 0;
       for (const mapping of mappings) {
@@ -201,8 +376,9 @@ const server = http.createServer(async (req, res) => {
           pageName: page.pageName,
           accessToken: page.accessToken,
           instagramAccountId: page.instagramAccountId,
-          notionDatabaseId: process.env.NOTION_DATABASE_ID || DATABASE_ID,
-          notionToken: NOTION_TOKEN,
+          notionDatabaseId: nDbId,
+          notionToken: nToken,
+          facebookUserId: agency?.facebook_user_id || null,
         });
         saved++;
       }
@@ -222,26 +398,30 @@ const server = http.createServer(async (req, res) => {
 
     // ── API Notion schema ──
     if (req.method === 'GET' && url.pathname.startsWith('/api/notion/schema')) {
-      if (!NOTION_TOKEN) { res.writeHead(500); return res.end(JSON.stringify({ error: 'missing_env' })); }
-      const dbId = url.searchParams.get('databaseId') || DATABASE_ID;
+      const agency = await getSessionAgency(req);
+      const nToken = agency?.notion_token || NOTION_TOKEN;
+      const nDbId  = url.searchParams.get('databaseId') || agency?.notion_database_id || DATABASE_ID;
+      if (!nToken) { res.writeHead(500); return res.end(JSON.stringify({ error: 'missing_env' })); }
       return proxy(res, {
-        hostname: 'api.notion.com', path: `/v1/databases/${dbId}`, method: 'GET',
-        headers: { 'Authorization': `Bearer ${NOTION_TOKEN}`, 'Notion-Version': '2022-06-28' },
+        hostname: 'api.notion.com', path: `/v1/databases/${nDbId}`, method: 'GET',
+        headers: { 'Authorization': `Bearer ${nToken}`, 'Notion-Version': '2022-06-28' },
       });
     }
 
     // ── API Notion query ──
     if (req.method === 'POST' && url.pathname === '/api/notion') {
-      if (!NOTION_TOKEN) { res.writeHead(500); return res.end(JSON.stringify({ error: 'missing_env' })); }
+      const agency = await getSessionAgency(req);
+      const nToken = agency?.notion_token || NOTION_TOKEN;
+      if (!nToken) { res.writeHead(500); return res.end(JSON.stringify({ error: 'missing_env' })); }
       const raw = await readBody(req);
       let parsed = {};
       try { parsed = raw ? JSON.parse(raw) : {}; } catch { res.writeHead(400); return res.end(JSON.stringify({ error: 'invalid_json' })); }
-      const dbId = parsed.databaseId || DATABASE_ID;
+      const nDbId = parsed.databaseId || agency?.notion_database_id || DATABASE_ID;
       delete parsed.databaseId;
       const forward = JSON.stringify(parsed);
       return proxy(res, {
-        hostname: 'api.notion.com', path: `/v1/databases/${dbId}/query`, method: 'POST',
-        headers: { 'Authorization': `Bearer ${NOTION_TOKEN}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(forward) },
+        hostname: 'api.notion.com', path: `/v1/databases/${nDbId}/query`, method: 'POST',
+        headers: { 'Authorization': `Bearer ${nToken}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(forward) },
       }, forward);
     }
 
@@ -284,6 +464,7 @@ const server = http.createServer(async (req, res) => {
 
     res.writeHead(404); res.end('Not found');
   } catch (e) {
+    console.error('Server error:', e);
     res.writeHead(500, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'server_error', message: e.message }));
   }

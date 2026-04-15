@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configurações — SocialDash</title>
+<link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
+<style>
+  :root {
+    --blue: #3C91E6;
+    --dark: #1a1a2e;
+    --grey: #f0f4f8;
+    --border: #e0e0e0;
+    --text: #333;
+    --muted: #888;
+    --green: #27ae60;
+    --red: #e74c3c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: var(--grey); color: var(--text); min-height: 100vh; }
+
+  /* ── Layout ── */
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 240px;
+    background: #fff;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+    flex-shrink: 0;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px 24px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--dark);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .brand i { font-size: 26px; color: var(--blue); }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 20px;
+    font-size: 14px;
+    color: var(--muted);
+    text-decoration: none;
+    border-radius: 0;
+    transition: color .2s, background .2s;
+  }
+  .nav-item:hover { color: var(--blue); background: var(--grey); }
+  .nav-item.active { color: var(--blue); font-weight: 600; background: #eef5fd; }
+  .nav-item i { font-size: 20px; }
+  .sidebar-bottom { margin-top: auto; padding: 0 20px; }
+  .logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .logout-btn:hover { color: var(--red); }
+
+  /* ── Main content ── */
+  .main { flex: 1; padding: 36px 40px; max-width: 720px; }
+  .page-title { font-size: 22px; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
+  .page-sub { font-size: 14px; color: var(--muted); margin-bottom: 32px; }
+
+  /* ── Cards ── */
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title i { font-size: 20px; color: var(--blue); }
+  .card-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+
+  /* ── Form ── */
+  .form-row { margin-bottom: 18px; }
+  label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+  input[type=text], input[type=password] {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--text);
+    background: #fafafa;
+    outline: none;
+    transition: border .2s;
+  }
+  input:focus { border-color: var(--blue); background: #fff; }
+
+  .btn {
+    height: 44px;
+    padding: 0 24px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background .2s;
+  }
+  .btn:hover { background: #2d7dd2; }
+  .btn:disabled { background: #aaa; cursor: not-allowed; }
+  .btn-outline {
+    background: transparent;
+    color: var(--blue);
+    border: 1.5px solid var(--blue);
+  }
+  .btn-outline:hover { background: #eef5fd; }
+
+  .alert {
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    margin-top: 14px;
+  }
+  .alert-error { background: #fff0f0; color: var(--red); border: 1px solid #f5c6c6; }
+  .alert-success { background: #f0fff4; color: var(--green); border: 1px solid #b7ebc8; }
+
+  /* ── Mapping rows ── */
+  .mapping-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    align-items: end;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .mapping-row:last-child { border-bottom: none; }
+  .page-info .page-name { font-size: 14px; font-weight: 600; color: var(--dark); }
+  .page-info .page-ig { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  select {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--text);
+    background: #fafafa;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+  }
+  select:focus { border-color: var(--blue); background-color: #fff; }
+
+  .badge-mapped {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f0fff4;
+    color: var(--green);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid #b7ebc8;
+  }
+
+  .empty-state { text-align: center; padding: 32px; color: var(--muted); font-size: 14px; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <a href="/" class="brand"><i class='bx bxs-bar-chart-alt-2'></i>SocialDash</a>
+    <a href="/" class="nav-item"><i class='bx bxs-dashboard'></i>Dashboard</a>
+    <a href="/configuracoes" class="nav-item active"><i class='bx bxs-cog'></i>Configurações</a>
+    <div class="sidebar-bottom">
+      <a href="/logout" class="logout-btn"><i class='bx bx-log-out'></i>Sair</a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="page-title">Configurações</div>
+    <div class="page-sub">Gerencie as integrações da sua agência</div>
+
+    <!-- Card 1: Notion -->
+    <div class="card">
+      <div class="card-title"><i class='bx bx-data'></i>Integração com Notion</div>
+      <div class="card-sub">Configure o banco de dados do Notion onde as métricas serão salvas.</div>
+
+      <div class="form-row">
+        <label>Notion Token (Integration Secret)</label>
+        <input type="password" id="notion-token" placeholder="secret_..." autocomplete="off">
+      </div>
+      <div class="form-row">
+        <label>Database ID do Notion</label>
+        <input type="text" id="notion-db" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+      </div>
+
+      <button class="btn" id="btn-save-notion" onclick="saveNotionSettings()">
+        <i class='bx bx-save'></i> Salvar configurações
+      </button>
+      <div id="notion-alert"></div>
+    </div>
+
+    <!-- Card 2: Páginas conectadas -->
+    <div class="card" id="card-pages" style="display:none">
+      <div class="card-title"><i class='bx bxl-instagram'></i>Páginas do Instagram</div>
+      <div class="card-sub">Selecione qual cliente do Notion corresponde a cada página do Facebook.</div>
+
+      <div id="pages-content"><div class="empty-state">Carregando...</div></div>
+
+      <div id="btn-mapping-wrap" style="margin-top:20px;display:none">
+        <button class="btn" id="btn-save-mapping" onclick="saveMapping()">
+          <i class='bx bx-save'></i> Salvar vínculos
+        </button>
+        <div id="mapping-alert"></div>
+      </div>
+
+      <div style="margin-top:16px">
+        <a href="/auth/instagram" class="btn btn-outline" style="font-size:13px;height:38px">
+          <i class='bx bx-refresh'></i> Reconectar / buscar novas páginas
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let notionClients = [];
+  let pendingToken = null;
+  let pendingPages = [];
+
+  async function init() {
+    // Carregar configurações da agência
+    const settings = await fetch('/api/agency/settings').then(r => r.json());
+
+    if (settings.notionToken) {
+      document.getElementById('notion-token').value = settings.notionToken;
+    }
+    if (settings.notionDatabaseId) {
+      document.getElementById('notion-db').value = settings.notionDatabaseId;
+    }
+
+    if (settings.hasNotion) {
+      await loadPages();
+    }
+  }
+
+  async function saveNotionSettings() {
+    const btn = document.getElementById('btn-save-notion');
+    const alertEl = document.getElementById('notion-alert');
+    const notionToken = document.getElementById('notion-token').value.trim();
+    const notionDatabaseId = document.getElementById('notion-db').value.trim();
+
+    if (!notionToken || !notionDatabaseId) {
+      alertEl.innerHTML = '<div class="alert alert-error">Preencha os dois campos.</div>';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Validando...';
+    alertEl.innerHTML = '';
+
+    try {
+      const res = await fetch('/api/agency/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notionToken, notionDatabaseId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao salvar');
+
+      alertEl.innerHTML = '<div class="alert alert-success"><i class="bx bx-check"></i> Configurações salvas com sucesso!</div>';
+      await loadPages();
+    } catch (e) {
+      alertEl.innerHTML = `<div class="alert alert-error">${e.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bx bx-save"></i> Salvar configurações';
+    }
+  }
+
+  async function loadPages() {
+    document.getElementById('card-pages').style.display = 'block';
+    document.getElementById('pages-content').innerHTML = '<div class="empty-state">Carregando páginas...</div>';
+
+    try {
+      // Buscar clientes do Notion para o dropdown
+      const [pagesRes, clientsRes] = await Promise.all([
+        fetch('/api/agency/pages').then(r => r.json()),
+        fetch('/api/notion/clients').then(r => r.json()),
+      ]);
+
+      notionClients = clientsRes;
+      pendingToken = pagesRes.pendingToken;
+      pendingPages = pagesRes.pending || [];
+      const mapped = pagesRes.mapped || [];
+
+      const hasPending = pendingPages.length > 0;
+      const hasMapped = mapped.length > 0;
+
+      if (!hasPending && !hasMapped) {
+        document.getElementById('pages-content').innerHTML =
+          '<div class="empty-state"><i class="bx bxl-instagram" style="font-size:32px;color:#ddd"></i><br>Nenhuma página encontrada.<br>Clique em "Reconectar" abaixo para buscar suas páginas.</div>';
+        return;
+      }
+
+      let html = '';
+
+      // Páginas já mapeadas
+      if (hasMapped) {
+        html += mapped.map(p => `
+          <div class="mapping-row">
+            <div class="page-info">
+              <div class="page-name"><i class='bx bxl-facebook-circle' style="color:#1877F2"></i> ${p.pageName}</div>
+              <div class="page-ig">Instagram ID: ${p.instagramAccountId}</div>
+            </div>
+            <div>
+              <span class="badge-mapped"><i class='bx bxs-check-circle'></i>${p.notionClientId}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Páginas pendentes (aguardando mapeamento)
+      if (hasPending) {
+        const opts = notionClients.length
+          ? `<option value="">— Selecione o cliente —</option>` + notionClients.map(c => `<option value="${c.id}">${c.name}</option>`).join('')
+          : `<option value="">— Nenhum cliente no Notion —</option>`;
+
+        html += pendingPages.map(p => `
+          <div class="mapping-row">
+            <div class="page-info">
+              <div class="page-name"><i class='bx bxl-facebook-circle' style="color:#1877F2"></i> ${p.pageName}</div>
+              <div class="page-ig">Instagram ID: ${p.instagramAccountId}</div>
+            </div>
+            <select data-page-id="${p.pageId}">${opts}</select>
+          </div>
+        `).join('');
+
+        document.getElementById('btn-mapping-wrap').style.display = 'block';
+      }
+
+      document.getElementById('pages-content').innerHTML = html;
+
+    } catch (e) {
+      document.getElementById('pages-content').innerHTML =
+        `<div class="empty-state" style="color:#e74c3c">Erro ao carregar páginas: ${e.message}</div>`;
+    }
+  }
+
+  async function saveMapping() {
+    const selects = document.querySelectorAll('#pages-content select[data-page-id]');
+    const mappings = Array.from(selects).map(s => ({
+      pageId: s.dataset.pageId,
+      notionClientId: s.value,
+    }));
+
+    if (mappings.every(m => !m.notionClientId)) {
+      document.getElementById('mapping-alert').innerHTML =
+        '<div class="alert alert-error">Selecione pelo menos um cliente.</div>';
+      return;
+    }
+
+    const btn = document.getElementById('btn-save-mapping');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Salvando...';
+    document.getElementById('mapping-alert').innerHTML = '';
+
+    try {
+      const res = await fetch('/api/confirm-mapping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: pendingToken, mappings }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao salvar');
+
+      document.getElementById('mapping-alert').innerHTML =
+        `<div class="alert alert-success"><i class="bx bx-check"></i> ${data.saved} cliente(s) vinculado(s) com sucesso!</div>`;
+
+      // Recarregar para mostrar os vínculos confirmados
+      setTimeout(() => loadPages(), 1200);
+    } catch (e) {
+      document.getElementById('mapping-alert').innerHTML =
+        `<div class="alert alert-error">${e.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bx bx-save"></i> Salvar vínculos';
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
