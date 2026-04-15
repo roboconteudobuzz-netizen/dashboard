@@ -254,6 +254,12 @@
 </div>
 
 <script>
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = String(str ?? '');
+    return div.innerHTML;
+  }
+
   let notionClients = [];
   let pendingToken = null;
   let pendingPages = [];
@@ -262,9 +268,6 @@
     // Carregar configurações da agência
     const settings = await fetch('/api/agency/settings').then(r => r.json());
 
-    if (settings.notionToken) {
-      document.getElementById('notion-token').value = settings.notionToken;
-    }
     if (settings.notionDatabaseId) {
       document.getElementById('notion-db').value = settings.notionDatabaseId;
     }
@@ -340,11 +343,11 @@
         html += mapped.map(p => `
           <div class="mapping-row">
             <div class="page-info">
-              <div class="page-name"><i class='bx bxl-facebook-circle' style="color:#1877F2"></i> ${p.pageName}</div>
-              <div class="page-ig">Instagram ID: ${p.instagramAccountId}</div>
+              <div class="page-name"><i class='bx bxl-facebook-circle' style="color:#1877F2"></i> ${escapeHtml(p.pageName)}</div>
+              <div class="page-ig">Instagram ID: ${escapeHtml(p.instagramAccountId)}</div>
             </div>
             <div>
-              <span class="badge-mapped"><i class='bx bxs-check-circle'></i>${p.notionClientId}</span>
+              <span class="badge-mapped"><i class='bx bxs-check-circle'></i>${escapeHtml(p.notionClientId)}</span>
             </div>
           </div>
         `).join('');
@@ -353,16 +356,16 @@
       // Páginas pendentes (aguardando mapeamento)
       if (hasPending) {
         const opts = notionClients.length
-          ? `<option value="">— Selecione o cliente —</option>` + notionClients.map(c => `<option value="${c.id}">${c.name}</option>`).join('')
+          ? `<option value="">— Selecione o cliente —</option>` + notionClients.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('')
           : `<option value="">— Nenhum cliente no Notion —</option>`;
 
         html += pendingPages.map(p => `
           <div class="mapping-row">
             <div class="page-info">
-              <div class="page-name"><i class='bx bxl-facebook-circle' style="color:#1877F2"></i> ${p.pageName}</div>
-              <div class="page-ig">Instagram ID: ${p.instagramAccountId}</div>
+              <div class="page-name"><i class='bx bxl-facebook-circle' style="color:#1877F2"></i> ${escapeHtml(p.pageName)}</div>
+              <div class="page-ig">Instagram ID: ${escapeHtml(p.instagramAccountId)}</div>
             </div>
-            <select data-page-id="${p.pageId}">${opts}</select>
+            <select data-page-id="${escapeHtml(p.pageId)}">${opts}</select>
           </div>
         `).join('');
 
@@ -373,7 +376,7 @@
 
     } catch (e) {
       document.getElementById('pages-content').innerHTML =
-        `<div class="empty-state" style="color:#e74c3c">Erro ao carregar páginas: ${e.message}</div>`;
+        `<div class="empty-state" style="color:#e74c3c">Erro ao carregar páginas: ${escapeHtml(e.message)}</div>`;
     }
   }
 

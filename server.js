@@ -247,7 +247,6 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({
         name: agency.facebook_user_name,
-        notionToken: agency.notion_token || '',
         notionDatabaseId: agency.notion_database_id || '',
         hasNotion: !!(agency.notion_token && agency.notion_database_id),
       }));
@@ -305,7 +304,12 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({
         pendingToken: pending?.token || null,
-        pending: pendingPages,
+        pending: pendingPages.map(p => ({
+          pageId: p.pageId,
+          pageName: p.pageName,
+          instagramAccountId: p.instagramAccountId,
+          // accessToken nunca é enviado ao cliente
+        })),
         mapped: mapped.map(c => ({
           pageId: c.page_id,
           pageName: c.page_name,
@@ -389,10 +393,12 @@ const server = http.createServer(async (req, res) => {
       return res.end(JSON.stringify({ saved }));
     }
 
-    // ── API: listar clientes conectados ──
+    // ── API: listar clientes conectados (requer sessão) ──
     if (req.method === 'GET' && url.pathname === '/api/clients') {
       if (!db) { res.writeHead(503); return res.end(JSON.stringify({ error: 'db_not_available' })); }
-      const clients = await db.getAllClients();
+      const agency = await getSessionAgency(req);
+      if (!agency) { res.writeHead(401); return res.end(JSON.stringify({ error: 'unauthorized' })); }
+      const clients = await db.getClientsByAgency(agency.facebook_user_id);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify(clients.map(c => ({ id: c.notion_client_id, name: c.page_name }))));
     }
