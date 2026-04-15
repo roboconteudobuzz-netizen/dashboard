@@ -99,7 +99,8 @@ async function getSessionAgency(req) {
 
 function setSessionCookie(res, sessionToken) {
   const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
-  res.setHeader('Set-Cookie', `session=${sessionToken}; Path=/; HttpOnly; SameSite=Lax; Expires=${expires}`);
+  const secure = BASE_URL.startsWith('https') ? '; Secure' : '';
+  res.setHeader('Set-Cookie', `session=${sessionToken}; Path=/; HttpOnly; SameSite=Lax${secure}; Expires=${expires}`);
 }
 
 function clearSessionCookie(res) {
