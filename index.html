@@ -722,19 +722,18 @@ function populateMonths() {
 let CLIENT_ID = new URLSearchParams(window.location.search).get('cliente');
 
 async function populateClients() {
-  const res = await fetch(`/api/notion/schema?databaseId=${CONFIG.databaseId}`);
+  const res = await fetch('/api/clients');
   if (!res.ok) return;
-  const schema = await res.json();
-  const options = schema.properties?.[FIELDS.idCliente]?.select?.options ?? [];
+  const clients = await res.json();
   const sel = document.getElementById('client-select');
-  options.forEach(opt => {
+  clients.forEach(c => {
     const o = document.createElement('option');
-    o.value = opt.name; o.textContent = opt.name;
-    if (opt.name === CLIENT_ID) o.selected = true;
+    o.value = c.id; o.textContent = c.id;
+    if (c.id === CLIENT_ID) o.selected = true;
     sel.appendChild(o);
   });
-  if (!CLIENT_ID) {
-    CLIENT_ID = 'NAH-01';
+  if (!CLIENT_ID && clients.length) {
+    CLIENT_ID = clients[0].id;
     sel.value = CLIENT_ID;
   }
 }
