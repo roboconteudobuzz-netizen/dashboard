@@ -52,6 +52,8 @@ async function setup() {
   await pool.query(`
     ALTER TABLE pending_connections ADD COLUMN IF NOT EXISTS facebook_user_id VARCHAR(100);
     ALTER TABLE clients ADD COLUMN IF NOT EXISTS facebook_user_id VARCHAR(100);
+    ALTER TABLE agencies ADD COLUMN IF NOT EXISTS user_access_token TEXT;
+    ALTER TABLE agencies ADD COLUMN IF NOT EXISTS token_expires_at TIMESTAMP;
   `);
 
   console.log('✅ Banco de dados pronto');
@@ -61,17 +63,19 @@ async function setup() {
 //  AGENCIES
 // ══════════════════════════════════════════
 
-async function upsertAgency(facebookUserId, name, sessionToken) {
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 dias
+async function upsertAgency(facebookUserId, name, sessionToken, userAccessToken, tokenExpiresAt) {
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 dias (sessão)
   await pool.query(
-    `INSERT INTO agencies (facebook_user_id, facebook_user_name, session_token, session_expires_at)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO agencies (facebook_user_id, facebook_user_name, session_token, session_expires_at, user_access_token, token_expires_at)
+     VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (facebook_user_id) DO UPDATE SET
        facebook_user_name = $2,
        session_token = $3,
        session_expires_at = $4,
+       user_access_token = COALESCE($5, agencies.user_access_token),
+       token_expires_at  = COALESCE($6, agencies.token_expires_at),
        updated_at = NOW()`,
-    [facebookUserId, name, sessionToken, expiresAt]
+    [facebookUserId, name, sessionToken, expiresAt, userAccessToken || null, tokenExpiresAt || null]
   );
 }
 

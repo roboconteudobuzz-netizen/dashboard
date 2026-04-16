@@ -109,6 +109,66 @@ function clearSessionCookie(res) {
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml' };
 
+// ── Buscar todas as páginas do Facebook com Instagram vinculado ──
+async function fetchPagesWithInstagram(userToken) {
+  const allPages = new Map(); // pageId → page (deduplicado)
+
+  // Via Business Manager (/me/businesses)
+  try {
+    const businessesData = await httpsGet(`https://graph.facebook.com/v21.0/me/businesses?access_token=${userToken}`);
+    if (businessesData.data?.length) {
+      for (const business of businessesData.data) {
+        const ownedPages = await httpsGet(
+          `https://graph.facebook.com/v21.0/${business.id}/owned_pages?fields=id,name,access_token&access_token=${userToken}`
+        );
+        for (const page of (ownedPages.data || [])) {
+          if (page.access_token) allPages.set(page.id, page);
+        }
+        const clientPages = await httpsGet(
+          `https://graph.facebook.com/v21.0/${business.id}/client_pages?fields=id,name,access_token&access_token=${userToken}`
+        );
+        for (const page of (clientPages.data || [])) {
+          if (page.access_token) allPages.set(page.id, page);
+        }
+      }
+    }
+  } catch (e) {
+    console.log('   ⚠️  /me/businesses indisponível, usando /me/accounts:', e.message);
+  }
+
+  // Via /me/accounts (fallback ou complemento)
+  try {
+    const accountsData = await httpsGet(`https://graph.facebook.com/v21.0/me/accounts?access_token=${userToken}`);
+    for (const page of (accountsData.data || [])) {
+      if (!allPages.has(page.id)) allPages.set(page.id, page);
+    }
+  } catch (e) {
+    console.log('   ⚠️  /me/accounts indisponível:', e.message);
+  }
+
+  if (!allPages.size) return null;
+
+  // Para cada página, verificar se tem Instagram vinculado
+  const pagesWithIg = [];
+  for (const page of allPages.values()) {
+    try {
+      const igData = await httpsGet(
+        `https://graph.facebook.com/v21.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
+      );
+      const igId = igData.instagram_business_account?.id;
+      if (!igId) continue;
+      pagesWithIg.push({
+        pageId: page.id,
+        pageName: page.name,
+        accessToken: page.access_token,
+        instagramAccountId: igId,
+      });
+    } catch {}
+  }
+
+  return pagesWithIg;
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     if (req.method === 'OPTIONS') {
@@ -179,7 +239,7 @@ const server = http.createServer(async (req, res) => {
         return res.end();
       }
 
-      // 1. Trocar código por token de usuário
+      // 1. Trocar código por token de curta duração
       const tokenData = await httpsPost('graph.facebook.com',
         `/v21.0/oauth/access_token`,
         { client_id: META_APP_ID, client_secret: META_APP_SECRET, redirect_uri: CALLBACK_URL, code }
@@ -190,71 +250,40 @@ const server = http.createServer(async (req, res) => {
         return res.end();
       }
 
-      const userToken = tokenData.access_token;
+      // 2. Trocar por long-lived token (60 dias)
+      let userToken = tokenData.access_token;
+      let tokenExpiresAt = null;
+      try {
+        const llData = await httpsGet(
+          `https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${META_APP_ID}&client_secret=${META_APP_SECRET}&fb_exchange_token=${userToken}`
+        );
+        if (llData.access_token) {
+          userToken = llData.access_token;
+          const expiresIn = llData.expires_in || (60 * 24 * 60 * 60); // 60 dias default
+          tokenExpiresAt = new Date(Date.now() + expiresIn * 1000);
+          console.log(`   🔑 Long-lived token obtido — expira em ${tokenExpiresAt.toLocaleDateString('pt-BR')}`);
+        }
+      } catch (e) {
+        console.log('   ⚠️  Não foi possível obter long-lived token:', e.message);
+      }
 
-      // 2. Buscar ID e nome do usuário
+      // 3. Buscar ID e nome do usuário
       const meData = await httpsGet(`https://graph.facebook.com/v21.0/me?fields=id,name&access_token=${userToken}`);
       const facebookUserId = meData.id;
       const facebookUserName = meData.name;
 
-      // 3. Buscar páginas — tenta via /me/businesses primeiro, cai em /me/accounts como fallback
-      const allPages = new Map(); // pageId → page (deduplicado)
+      // 4. Buscar páginas com Instagram vinculado
+      const pagesWithIg = await fetchPagesWithInstagram(userToken);
 
-      // 3a. Via Business Manager (/me/businesses)
-      try {
-        const businessesData = await httpsGet(`https://graph.facebook.com/v21.0/me/businesses?access_token=${userToken}`);
-        if (businessesData.data?.length) {
-          for (const business of businessesData.data) {
-            const ownedPages = await httpsGet(
-              `https://graph.facebook.com/v21.0/${business.id}/owned_pages?fields=id,name,access_token&access_token=${userToken}`
-            );
-            for (const page of (ownedPages.data || [])) {
-              if (page.access_token) allPages.set(page.id, page);
-            }
-            // Páginas de clientes gerenciadas pelo Business Manager
-            const clientPages = await httpsGet(
-              `https://graph.facebook.com/v21.0/${business.id}/client_pages?fields=id,name,access_token&access_token=${userToken}`
-            );
-            for (const page of (clientPages.data || [])) {
-              if (page.access_token) allPages.set(page.id, page);
-            }
-          }
-        }
-      } catch (e) {
-        console.log('   ⚠️  /me/businesses indisponível, usando /me/accounts:', e.message);
-      }
-
-      // 3b. Via /me/accounts (fallback ou complemento)
-      const accountsData = await httpsGet(`https://graph.facebook.com/v21.0/me/accounts?access_token=${userToken}`);
-      for (const page of (accountsData.data || [])) {
-        if (!allPages.has(page.id)) allPages.set(page.id, page);
-      }
-
-      if (!allPages.size) {
+      if (!pagesWithIg) {
         res.writeHead(302, { Location: '/onboarding?erro=Nenhuma+Página+do+Facebook+encontrada' });
         return res.end();
       }
 
-      // 4. Para cada página, verificar se tem Instagram vinculado
-      const pagesWithIg = [];
-      for (const page of allPages.values()) {
-        const igData = await httpsGet(
-          `https://graph.facebook.com/v21.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
-        );
-        const igId = igData.instagram_business_account?.id;
-        if (!igId) continue;
-        pagesWithIg.push({
-          pageId: page.id,
-          pageName: page.name,
-          accessToken: page.access_token,
-          instagramAccountId: igId,
-        });
-      }
-
-      // 5. Criar sessão e salvar agência
+      // 5. Criar sessão e salvar agência (com long-lived token)
       const sessionToken = require('crypto').randomBytes(24).toString('hex');
       if (db) {
-        await db.upsertAgency(facebookUserId, facebookUserName, sessionToken);
+        await db.upsertAgency(facebookUserId, facebookUserName, sessionToken, userToken, tokenExpiresAt);
 
         // Filtrar páginas que já estão mapeadas no banco
         const alreadyMapped = await db.getClientsByAgency(facebookUserId);
@@ -265,12 +294,60 @@ const server = http.createServer(async (req, res) => {
           const pendingToken = require('crypto').randomBytes(24).toString('hex');
           await db.savePendingForAgency(facebookUserId, pendingToken, newPages);
         } else {
-          // Sem páginas novas — limpa pendentes antigos
           await db.deletePendingByAgency(facebookUserId);
         }
       }
 
       setSessionCookie(res, sessionToken);
+      res.writeHead(302, { Location: '/configuracoes' });
+      return res.end();
+    }
+
+    // ── RECONECTAR: busca novas páginas sem redirecionar ao Facebook ──
+    if (req.method === 'GET' && url.pathname === '/auth/reconnect') {
+      const agency = await getSessionAgency(req);
+      if (!agency) {
+        res.writeHead(302, { Location: '/onboarding' });
+        return res.end();
+      }
+
+      // Verificar se o long-lived token ainda é válido (margem de 3 dias)
+      const tokenValid = agency.user_access_token &&
+        agency.token_expires_at &&
+        new Date(agency.token_expires_at) > new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+
+      if (!tokenValid) {
+        // Token expirado ou ausente — redirecionar para OAuth completo
+        console.log('   🔄 Token expirado ou ausente — redirecionando para OAuth');
+        const scope = 'pages_show_list,instagram_basic,instagram_manage_insights,pages_read_engagement,business_management';
+        const authUrl = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${META_APP_ID}&redirect_uri=${encodeURIComponent(CALLBACK_URL)}&scope=${scope}&response_type=code`;
+        res.writeHead(302, { Location: authUrl });
+        return res.end();
+      }
+
+      // Token válido — buscar páginas silenciosamente
+      console.log(`   🔄 Reconectando com token armazenado (expira em ${new Date(agency.token_expires_at).toLocaleDateString('pt-BR')})`);
+      try {
+        const pagesWithIg = await fetchPagesWithInstagram(agency.user_access_token);
+
+        if (pagesWithIg && db) {
+          const alreadyMapped = await db.getClientsByAgency(agency.facebook_user_id);
+          const mappedPageIds = new Set(alreadyMapped.map(c => c.page_id));
+          const newPages = pagesWithIg.filter(p => !mappedPageIds.has(p.pageId));
+
+          if (newPages.length) {
+            const pendingToken = require('crypto').randomBytes(24).toString('hex');
+            await db.savePendingForAgency(agency.facebook_user_id, pendingToken, newPages);
+            console.log(`   ✅ ${newPages.length} página(s) nova(s) encontrada(s)`);
+          } else {
+            await db.deletePendingByAgency(agency.facebook_user_id);
+            console.log('   ℹ️  Nenhuma página nova encontrada');
+          }
+        }
+      } catch (e) {
+        console.error('   ❌ Erro ao reconectar:', e.message);
+      }
+
       res.writeHead(302, { Location: '/configuracoes' });
       return res.end();
     }
