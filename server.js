@@ -255,9 +255,18 @@ const server = http.createServer(async (req, res) => {
       const sessionToken = require('crypto').randomBytes(24).toString('hex');
       if (db) {
         await db.upsertAgency(facebookUserId, facebookUserName, sessionToken);
-        if (pagesWithIg.length) {
+
+        // Filtrar páginas que já estão mapeadas no banco
+        const alreadyMapped = await db.getClientsByAgency(facebookUserId);
+        const mappedPageIds = new Set(alreadyMapped.map(c => c.page_id));
+        const newPages = pagesWithIg.filter(p => !mappedPageIds.has(p.pageId));
+
+        if (newPages.length) {
           const pendingToken = require('crypto').randomBytes(24).toString('hex');
-          await db.savePendingForAgency(facebookUserId, pendingToken, pagesWithIg);
+          await db.savePendingForAgency(facebookUserId, pendingToken, newPages);
+        } else {
+          // Sem páginas novas — limpa pendentes antigos
+          await db.deletePendingByAgency(facebookUserId);
         }
       }
 
