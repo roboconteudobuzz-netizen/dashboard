@@ -279,6 +279,17 @@ const server = http.createServer(async (req, res) => {
     //  API: AGENCY
     // ══════════════════════════════════════════
 
+    // GET /api/agency/me — retorna nome e foto do usuário logado
+    if (req.method === 'GET' && url.pathname === '/api/agency/me') {
+      const agency = await getSessionAgency(req);
+      if (!agency) { res.writeHead(401); return res.end(JSON.stringify({ error: 'unauthorized' })); }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({
+        name: agency.facebook_user_name,
+        avatarUrl: `https://graph.facebook.com/${agency.facebook_user_id}/picture?type=square&width=64&height=64`,
+      }));
+    }
+
     // GET /api/agency/settings — retorna configurações da agência logada
     if (req.method === 'GET' && url.pathname === '/api/agency/settings') {
       const agency = await getSessionAgency(req);

@@ -233,6 +233,32 @@ body { background: var(--grey); overflow-x: hidden; }
   color: var(--dark-grey);
   cursor: pointer;
 }
+#content nav .profile .avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid var(--grey);
+  transition: border-color .2s;
+}
+#content nav .profile .avatar:hover { border-color: var(--blue); }
+#content nav .profile { position: relative; }
+#content nav .profile .avatar-tooltip {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  background: var(--dark);
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s;
+}
+#content nav .profile:hover .avatar-tooltip { opacity: 1; }
 
 /* MAIN */
 #content main {
@@ -626,7 +652,8 @@ body { background: var(--grey); overflow-x: hidden; }
 
     <!-- Profile -->
     <div class="profile">
-      <i class='bx bxs-user-circle'></i>
+      <i class='bx bxs-user-circle' id="profile-icon"></i>
+      <span class="avatar-tooltip" id="profile-name"></span>
     </div>
   </nav>
 
@@ -1200,7 +1227,25 @@ if (!pages.length) {
 }
 
 populateMonths();
+async function loadProfile() {
+  try {
+    const res = await fetch('/api/agency/me');
+    if (!res.ok) return;
+    const { name, avatarUrl } = await res.json();
+    const icon = document.getElementById('profile-icon');
+    const tooltip = document.getElementById('profile-name');
+    const img = document.createElement('img');
+    img.src = avatarUrl;
+    img.className = 'avatar';
+    img.alt = name;
+    img.onerror = () => {}; // mantém o ícone padrão se falhar
+    img.onload = () => icon.replaceWith(img);
+    if (tooltip) tooltip.textContent = name;
+  } catch {}
+}
+
 populateClients().then(() => loadDashboard());
+loadProfile();
 </script>
 </body>
 </html>
