@@ -158,7 +158,7 @@ const server = http.createServer(async (req, res) => {
 
     // ── OAUTH: redirecionar para o Facebook ──
     if (req.method === 'GET' && url.pathname === '/auth/instagram') {
-      const scope = 'pages_show_list,instagram_basic,instagram_manage_insights,pages_read_engagement';
+      const scope = 'pages_show_list,instagram_basic,instagram_manage_insights,pages_read_engagement,business_management';
       const authUrl = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${META_APP_ID}&redirect_uri=${encodeURIComponent(CALLBACK_URL)}&scope=${scope}&response_type=code`;
       res.writeHead(302, { Location: authUrl });
       return res.end();
@@ -197,17 +197,47 @@ const server = http.createServer(async (req, res) => {
       const facebookUserId = meData.id;
       const facebookUserName = meData.name;
 
-      // 3. Buscar páginas com tokens permanentes
-      const pagesData = await httpsGet(`https://graph.facebook.com/v21.0/me/accounts?access_token=${userToken}`);
+      // 3. Buscar páginas — tenta via /me/businesses primeiro, cai em /me/accounts como fallback
+      const allPages = new Map(); // pageId → page (deduplicado)
 
-      if (!pagesData.data?.length) {
+      // 3a. Via Business Manager (/me/businesses)
+      try {
+        const businessesData = await httpsGet(`https://graph.facebook.com/v21.0/me/businesses?access_token=${userToken}`);
+        if (businessesData.data?.length) {
+          for (const business of businessesData.data) {
+            const ownedPages = await httpsGet(
+              `https://graph.facebook.com/v21.0/${business.id}/owned_pages?fields=id,name,access_token&access_token=${userToken}`
+            );
+            for (const page of (ownedPages.data || [])) {
+              if (page.access_token) allPages.set(page.id, page);
+            }
+            // Páginas de clientes gerenciadas pelo Business Manager
+            const clientPages = await httpsGet(
+              `https://graph.facebook.com/v21.0/${business.id}/client_pages?fields=id,name,access_token&access_token=${userToken}`
+            );
+            for (const page of (clientPages.data || [])) {
+              if (page.access_token) allPages.set(page.id, page);
+            }
+          }
+        }
+      } catch (e) {
+        console.log('   ⚠️  /me/businesses indisponível, usando /me/accounts:', e.message);
+      }
+
+      // 3b. Via /me/accounts (fallback ou complemento)
+      const accountsData = await httpsGet(`https://graph.facebook.com/v21.0/me/accounts?access_token=${userToken}`);
+      for (const page of (accountsData.data || [])) {
+        if (!allPages.has(page.id)) allPages.set(page.id, page);
+      }
+
+      if (!allPages.size) {
         res.writeHead(302, { Location: '/onboarding?erro=Nenhuma+Página+do+Facebook+encontrada' });
         return res.end();
       }
 
       // 4. Para cada página, verificar se tem Instagram vinculado
       const pagesWithIg = [];
-      for (const page of pagesData.data) {
+      for (const page of allPages.values()) {
         const igData = await httpsGet(
           `https://graph.facebook.com/v21.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
         );
