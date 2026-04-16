@@ -446,7 +446,7 @@ body { background: var(--grey); overflow-x: hidden; }
 }
 .rank-info { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
 .rank-thumb { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
-.rank-thumb-placeholder { width: 42px; height: 42px; border-radius: 8px; background: var(--grey); border: 1px solid var(--dark-grey); flex-shrink: 0; }
+.rank-thumb-placeholder { width: 42px; height: 42px; border-radius: 8px; background: var(--grey); border: 1px solid var(--dark-grey); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--dark-grey); font-size: 20px; }
 .rank-text { flex: 1; min-width: 0; }
 .rank-id { font-size: 13px; font-weight: 500; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
 .rank-plat { font-size: 11px; color: var(--dark-grey); margin-top: 1px; }
@@ -861,8 +861,8 @@ function fmt(n) {
 function getPostLabel(p) {
   const titulo = (p.legenda || p.idCliente || '—').substring(0, 55);
   const thumb = p.capa
-    ? `<img class="rank-thumb" src="${p.capa}" alt="" loading="lazy">`
-    : `<div class="rank-thumb-placeholder"></div>`;
+    ? `<img class="rank-thumb" src="${p.capa}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'rank-thumb-placeholder'}))">`
+    : `<div class="rank-thumb-placeholder"><i class='bx bxl-instagram'></i></div>`;
   const label = `<span class="rank-id" title="${titulo}">${titulo}</span><div class="rank-plat">${p.plataforma || '—'}</div>`;
   const inner = `${thumb}<div class="rank-text">${label}</div>`;
   if (p.linkPost) return `<a class="rank-info" href="${p.linkPost}" target="_blank" rel="noopener" style="text-decoration:none">${inner}</a>`;
