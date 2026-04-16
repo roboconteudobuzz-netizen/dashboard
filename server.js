@@ -373,8 +373,9 @@ const server = http.createServer(async (req, res) => {
     // GET /api/notion/clients — retorna opções de ID CLIENTE do Notion (para dropdown)
     if (req.method === 'GET' && url.pathname === '/api/notion/clients') {
       const agency = await getSessionAgency(req);
-      const nToken = agency?.notion_token || NOTION_TOKEN;
-      const nDbId  = agency?.notion_database_id || DATABASE_ID;
+      if (!agency) { res.writeHead(401); return res.end(JSON.stringify({ error: 'unauthorized' })); }
+      const nToken = agency.notion_token;
+      const nDbId  = agency.notion_database_id;
       if (!nToken || !nDbId) { res.writeHead(400); return res.end(JSON.stringify({ error: 'notion_not_configured' })); }
 
       const schema = await new Promise(resolve => {
@@ -418,8 +419,9 @@ const server = http.createServer(async (req, res) => {
       const pages = await db.getPending(token);
       if (!pages) { res.writeHead(404); return res.end(JSON.stringify({ error: 'not_found_or_expired' })); }
 
-      const nToken = agency?.notion_token || NOTION_TOKEN;
-      const nDbId  = agency?.notion_database_id || (process.env.NOTION_DATABASE_ID || DATABASE_ID);
+      const nToken = agency?.notion_token;
+      const nDbId  = agency?.notion_database_id;
+      if (!nToken || !nDbId) { res.writeHead(400); return res.end(JSON.stringify({ error: 'Notion não configurado. Configure nas configurações.' })); }
 
       let saved = 0;
       for (const mapping of mappings) {
@@ -457,9 +459,10 @@ const server = http.createServer(async (req, res) => {
     // ── API Notion schema ──
     if (req.method === 'GET' && url.pathname.startsWith('/api/notion/schema')) {
       const agency = await getSessionAgency(req);
-      const nToken = agency?.notion_token || NOTION_TOKEN;
-      const nDbId  = url.searchParams.get('databaseId') || agency?.notion_database_id || DATABASE_ID;
-      if (!nToken) { res.writeHead(500); return res.end(JSON.stringify({ error: 'missing_env' })); }
+      if (!agency) { res.writeHead(401); return res.end(JSON.stringify({ error: 'unauthorized' })); }
+      const nToken = agency.notion_token;
+      const nDbId  = url.searchParams.get('databaseId') || agency.notion_database_id;
+      if (!nToken || !nDbId) { res.writeHead(400); return res.end(JSON.stringify({ error: 'notion_not_configured' })); }
       return proxy(res, {
         hostname: 'api.notion.com', path: `/v1/databases/${nDbId}`, method: 'GET',
         headers: { 'Authorization': `Bearer ${nToken}`, 'Notion-Version': '2022-06-28' },
@@ -469,12 +472,14 @@ const server = http.createServer(async (req, res) => {
     // ── API Notion query ──
     if (req.method === 'POST' && url.pathname === '/api/notion') {
       const agency = await getSessionAgency(req);
-      const nToken = agency?.notion_token || NOTION_TOKEN;
-      if (!nToken) { res.writeHead(500); return res.end(JSON.stringify({ error: 'missing_env' })); }
+      if (!agency) { res.writeHead(401); return res.end(JSON.stringify({ error: 'unauthorized' })); }
+      const nToken = agency.notion_token;
+      if (!nToken) { res.writeHead(400); return res.end(JSON.stringify({ error: 'notion_not_configured' })); }
       const raw = await readBody(req);
       let parsed = {};
       try { parsed = raw ? JSON.parse(raw) : {}; } catch { res.writeHead(400); return res.end(JSON.stringify({ error: 'invalid_json' })); }
-      const nDbId = parsed.databaseId || agency?.notion_database_id || DATABASE_ID;
+      const nDbId = parsed.databaseId || agency.notion_database_id;
+      if (!nDbId) { res.writeHead(400); return res.end(JSON.stringify({ error: 'notion_not_configured' })); }
       delete parsed.databaseId;
       const forward = JSON.stringify(parsed);
       return proxy(res, {

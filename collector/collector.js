@@ -43,23 +43,6 @@ async function loadAgencies() {
     }
   }
 
-  // Modo variáveis de ambiente (Railway sem OAuth ainda)
-  if (process.env.META_ACCESS_TOKEN) {
-    return [{
-      id: 'buzz-media',
-      name: 'Buzz Media',
-      metaAccessToken: process.env.META_ACCESS_TOKEN,
-      notionToken: process.env.NOTION_TOKEN,
-      notionDatabaseId: process.env.NOTION_DATABASE_ID,
-      clients: [
-        { id: 'NAH-01' },
-        { id: 'PETROMASTER' },
-        { id: 'ESTÂNCIA LOPES' },
-        { id: 'MODELO' },
-      ],
-    }];
-  }
-
   // Modo local — lê do agencies.json
   try {
     return require('./agencies.json');
