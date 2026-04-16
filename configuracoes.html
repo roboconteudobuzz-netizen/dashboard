@@ -187,6 +187,17 @@
     border-radius: 20px;
     border: 1px solid #b7ebc8;
   }
+  .btn-unlink {
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px;
+    line-height: 1;
+    transition: color .2s;
+  }
+  .btn-unlink:hover { color: var(--red); }
 
   .empty-state { text-align: center; padding: 32px; color: var(--muted); font-size: 14px; }
   .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin .6s linear infinite; }
@@ -346,8 +357,11 @@
               <div class="page-name"><i class='bx bxl-facebook-circle' style="color:#1877F2"></i> ${escapeHtml(p.pageName)}</div>
               <div class="page-ig">Instagram ID: ${escapeHtml(p.instagramAccountId)}</div>
             </div>
-            <div>
+            <div style="display:flex;align-items:center;gap:8px">
               <span class="badge-mapped"><i class='bx bxs-check-circle'></i>${escapeHtml(p.notionClientId)}</span>
+              <button class="btn-unlink" title="Desvincular" onclick="unlinkPage('${escapeHtml(p.pageId)}', '${escapeHtml(p.pageName)}')">
+                <i class='bx bx-unlink'></i>
+              </button>
             </div>
           </div>
         `).join('');
@@ -418,6 +432,22 @@
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<i class="bx bx-save"></i> Salvar vínculos';
+    }
+  }
+
+  async function unlinkPage(pageId, pageName) {
+    if (!confirm(`Desvincular "${pageName}"? O cron não vai mais coletar dados para essa página.`)) return;
+
+    try {
+      const res = await fetch('/api/agency/unlink', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageId }),
+      });
+      if (!res.ok) throw new Error('Erro ao desvincular');
+      await loadPages();
+    } catch (e) {
+      alert('Erro: ' + e.message);
     }
   }
 

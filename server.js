@@ -358,6 +358,18 @@ const server = http.createServer(async (req, res) => {
       }));
     }
 
+    // DELETE /api/agency/pages/:pageId — desvincula uma página
+    if (req.method === 'POST' && url.pathname === '/api/agency/unlink') {
+      const agency = await getSessionAgency(req);
+      if (!agency) { res.writeHead(401); return res.end(JSON.stringify({ error: 'unauthorized' })); }
+      const body = JSON.parse(await readBody(req));
+      const { pageId } = body;
+      if (!pageId) { res.writeHead(400); return res.end(JSON.stringify({ error: 'pageId obrigatório' })); }
+      await db.deleteClientByPageId(pageId, agency.facebook_user_id);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: true }));
+    }
+
     // GET /api/notion/clients — retorna opções de ID CLIENTE do Notion (para dropdown)
     if (req.method === 'GET' && url.pathname === '/api/notion/clients') {
       const agency = await getSessionAgency(req);

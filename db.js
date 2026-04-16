@@ -181,6 +181,13 @@ async function getClientsByAgency(facebookUserId) {
   return result.rows;
 }
 
+async function deleteClientByPageId(pageId, facebookUserId) {
+  await pool.query(
+    'DELETE FROM clients WHERE page_id = $1 AND facebook_user_id = $2',
+    [pageId, facebookUserId]
+  );
+}
+
 async function getClientByNotionId(notionClientId) {
   const result = await pool.query(
     'SELECT * FROM clients WHERE notion_client_id = $1',
@@ -196,5 +203,5 @@ module.exports = {
   // pending
   savePending, savePendingForAgency, getPending, getPendingByAgency, deletePending, deletePendingByAgency,
   // clients
-  upsertClient, getAllClients, getClientsByAgency, getClientByNotionId,
+  upsertClient, getAllClients, getClientsByAgency, deleteClientByPageId, getClientByNotionId,
 };
