@@ -299,9 +299,11 @@ async function main() {
   const args = process.argv.slice(2);
 
   // Parsear argumentos
-  const mesArg     = args[args.indexOf('--mes') + 1];
-  const agenciaArg = args[args.indexOf('--agencia') + 1];
-  const dryRun     = args.includes('--dry-run');
+  const mesIdx      = args.indexOf('--mes');
+  const agenciaIdx  = args.indexOf('--agencia');
+  const mesArg      = mesIdx !== -1 ? args[mesIdx + 1] : null;
+  const agenciaArg  = agenciaIdx !== -1 ? args[agenciaIdx + 1] : null;
+  const dryRun      = args.includes('--dry-run');
 
   if (dryRun) {
     console.log('🧪 MODO DRY-RUN — nenhum dado será gravado no Notion\n');
