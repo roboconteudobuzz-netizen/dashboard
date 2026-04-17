@@ -167,6 +167,28 @@ async function collectClient(client, agency, mesConfig) {
   return { igAccountId, pageAccessToken };
 }
 
+// ── Log detalhado para dry-run ──
+function logDryRun(post, insights, clientId, mes, followersCount) {
+  const tipoMap = { IMAGE: 'Foto', VIDEO: 'Reels', CAROUSEL_ALBUM: 'Carrossel', REELS: 'Reels' };
+  const tipo    = tipoMap[post.media_type] || post.media_type;
+  const data    = post.timestamp ? new Date(post.timestamp).toLocaleDateString('pt-BR') : '-';
+  const legenda = (post.caption || '').substring(0, 60).replace(/\n/g, ' ');
+
+  console.log('');
+  console.log(`      ┌─ ${clientId} — ${mes}`);
+  console.log(`      │  📅 Data: ${data}  |  Tipo: ${tipo}`);
+  console.log(`      │  🔗 ${post.permalink || '-'}`);
+  console.log(`      │  💬 "${legenda}${post.caption?.length > 60 ? '…' : ''}"`);
+  console.log(`      │  ❤️  Curtidas:   ${post.like_count    ?? insights.likes    ?? '-'}`);
+  console.log(`      │  💬 Comentários: ${post.comments_count ?? insights.comments ?? '-'}`);
+  console.log(`      │  👁️  Alcance:    ${insights.reach      ?? '-'}`);
+  console.log(`      │  🔁 Compartilhamentos: ${insights.shares ?? '-'}`);
+  console.log(`      │  🔖 Salvamentos: ${insights.saved      ?? '-'}`);
+  console.log(`      │  🎬 Views:       ${insights.video_views ?? insights.plays   ?? '-'}`);
+  console.log(`      │  👥 Seguidores:  ${followersCount}`);
+  console.log(`      └─────────────────────────────────────`);
+}
+
 // ── Coletar dados de uma agência ──
 async function collectAgency(agency, mesConfig, dryRun = false) {
   console.log(`\n📦 Agência: ${agency.name}`);
@@ -198,11 +220,7 @@ async function collectAgency(agency, mesConfig, dryRun = false) {
             const insights = await meta.getPostInsights(post.id, post.media_type, pageAccessToken);
             const enriched = { ...post, insights, followersCount, ...demographics };
             if (dryRun) {
-              console.log(`\n      [DRY-RUN] Seria gravado no Notion:`);
-              console.log(`        Cliente: ${client.id} | Mês: ${mesConfig.label}`);
-              console.log(`        Post ID: ${post.id} | Tipo: ${post.media_type}`);
-              console.log(`        Curtidas: ${post.like_count ?? insights.likes ?? '-'} | Comentários: ${post.comments_count ?? insights.comments ?? '-'} | Alcance: ${insights.reach ?? '-'}`);
-              console.log(`        Seguidores: ${followersCount}`);
+              logDryRun(post, insights, client.id, mesConfig.label, followersCount);
               created++;
             } else {
               const result = await notion.upsertPost(agency.notionDatabaseId, agency.notionToken, enriched, client.id, mesConfig.label);
@@ -263,11 +281,7 @@ async function collectAgency(agency, mesConfig, dryRun = false) {
       // Para cada cliente da agência no Notion
       for (const client of agency.clients) {
         if (dryRun) {
-          console.log(`\n      [DRY-RUN] Seria gravado no Notion:`);
-          console.log(`        Cliente: ${client.id} | Mês: ${mesConfig.label}`);
-          console.log(`        Post ID: ${post.id} | Tipo: ${post.media_type}`);
-          console.log(`        Curtidas: ${post.like_count ?? insights.likes ?? '-'} | Comentários: ${post.comments_count ?? insights.comments ?? '-'} | Alcance: ${insights.reach ?? '-'}`);
-          console.log(`        Seguidores: ${followersCount}`);
+          logDryRun(post, insights, client.id, mesConfig.label, followersCount);
           created++;
         } else {
           const result = await notion.upsertPost(
