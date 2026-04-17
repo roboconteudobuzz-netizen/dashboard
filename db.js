@@ -95,6 +95,12 @@ async function updateAgencyNotion(facebookUserId, notionToken, notionDatabaseId)
      WHERE facebook_user_id = $3`,
     [notionToken, notionDatabaseId, facebookUserId]
   );
+  // Atualiza também todos os clientes da agência para manter sincronizado
+  await pool.query(
+    `UPDATE clients SET notion_token = $1, notion_database_id = $2, updated_at = NOW()
+     WHERE facebook_user_id = $3`,
+    [notionToken, notionDatabaseId, facebookUserId]
+  );
 }
 
 // ══════════════════════════════════════════
