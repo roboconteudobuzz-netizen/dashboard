@@ -25,8 +25,15 @@ async function loadAgencies(facebookUserIdFilter = null) {
       await pgClient.connect();
 
       const query = facebookUserIdFilter
-        ? 'SELECT * FROM clients WHERE facebook_user_id = $1 ORDER BY page_name'
-        : 'SELECT * FROM clients ORDER BY page_name';
+        ? `SELECT c.*, a.notion_token, a.notion_database_id
+           FROM clients c
+           JOIN agencies a ON c.facebook_user_id = a.facebook_user_id
+           WHERE c.facebook_user_id = $1
+           ORDER BY c.page_name`
+        : `SELECT c.*, a.notion_token, a.notion_database_id
+           FROM clients c
+           JOIN agencies a ON c.facebook_user_id = a.facebook_user_id
+           ORDER BY c.page_name`;
       const params = facebookUserIdFilter ? [facebookUserIdFilter] : [];
       const result = await pgClient.query(query, params);
       await pgClient.end();

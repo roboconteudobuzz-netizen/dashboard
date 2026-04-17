@@ -556,8 +556,6 @@ const server = http.createServer(async (req, res) => {
           pageName: page.pageName,
           accessToken: page.accessToken,
           instagramAccountId: page.instagramAccountId,
-          notionDatabaseId: nDbId,
-          notionToken: nToken,
           facebookUserId: agency?.facebook_user_id || null,
         });
         saved++;

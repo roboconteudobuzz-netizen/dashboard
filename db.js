@@ -54,6 +54,8 @@ async function setup() {
     ALTER TABLE clients ADD COLUMN IF NOT EXISTS facebook_user_id VARCHAR(100);
     ALTER TABLE agencies ADD COLUMN IF NOT EXISTS user_access_token TEXT;
     ALTER TABLE agencies ADD COLUMN IF NOT EXISTS token_expires_at TIMESTAMP;
+    ALTER TABLE clients DROP COLUMN IF EXISTS notion_token;
+    ALTER TABLE clients DROP COLUMN IF EXISTS notion_database_id;
   `);
 
   console.log('✅ Banco de dados pronto');
@@ -92,12 +94,6 @@ async function getAgencyBySession(sessionToken) {
 async function updateAgencyNotion(facebookUserId, notionToken, notionDatabaseId) {
   await pool.query(
     `UPDATE agencies SET notion_token = $1, notion_database_id = $2, updated_at = NOW()
-     WHERE facebook_user_id = $3`,
-    [notionToken, notionDatabaseId, facebookUserId]
-  );
-  // Atualiza também todos os clientes da agência para manter sincronizado
-  await pool.query(
-    `UPDATE clients SET notion_token = $1, notion_database_id = $2, updated_at = NOW()
      WHERE facebook_user_id = $3`,
     [notionToken, notionDatabaseId, facebookUserId]
   );
@@ -156,38 +152,45 @@ async function deletePendingByAgency(facebookUserId) {
 //  CLIENTS
 // ══════════════════════════════════════════
 
-async function upsertClient({ notionClientId, pageId, pageName, accessToken, instagramAccountId, notionDatabaseId, notionToken, facebookUserId }) {
+async function upsertClient({ notionClientId, pageId, pageName, accessToken, instagramAccountId, facebookUserId }) {
   const existing = await pool.query('SELECT id FROM clients WHERE page_id = $1', [pageId]);
 
   if (existing.rows.length) {
     await pool.query(
       `UPDATE clients SET
         notion_client_id = $1, page_name = $2, access_token = $3,
-        instagram_account_id = $4, notion_database_id = $5, notion_token = $6,
-        facebook_user_id = $7, updated_at = NOW()
-       WHERE page_id = $8`,
-      [notionClientId, pageName, accessToken, instagramAccountId, notionDatabaseId, notionToken, facebookUserId, pageId]
+        instagram_account_id = $4, facebook_user_id = $5, updated_at = NOW()
+       WHERE page_id = $6`,
+      [notionClientId, pageName, accessToken, instagramAccountId, facebookUserId, pageId]
     );
   } else {
     await pool.query(
       `INSERT INTO clients
-        (notion_client_id, page_id, page_name, access_token, instagram_account_id, notion_database_id, notion_token, facebook_user_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [notionClientId, pageId, pageName, accessToken, instagramAccountId, notionDatabaseId, notionToken, facebookUserId]
+        (notion_client_id, page_id, page_name, access_token, instagram_account_id, facebook_user_id)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [notionClientId, pageId, pageName, accessToken, instagramAccountId, facebookUserId]
     );
   }
 }
 
 async function getAllClients() {
-  const result = await pool.query('SELECT * FROM clients ORDER BY page_name');
+  const result = await pool.query(`
+    SELECT c.*, a.notion_token, a.notion_database_id
+    FROM clients c
+    JOIN agencies a ON c.facebook_user_id = a.facebook_user_id
+    ORDER BY c.page_name
+  `);
   return result.rows;
 }
 
 async function getClientsByAgency(facebookUserId) {
-  const result = await pool.query(
-    'SELECT * FROM clients WHERE facebook_user_id = $1 ORDER BY page_name',
-    [facebookUserId]
-  );
+  const result = await pool.query(`
+    SELECT c.*, a.notion_token, a.notion_database_id
+    FROM clients c
+    JOIN agencies a ON c.facebook_user_id = a.facebook_user_id
+    WHERE c.facebook_user_id = $1
+    ORDER BY c.page_name
+  `, [facebookUserId]);
   return result.rows;
 }
 
