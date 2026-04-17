@@ -201,7 +201,7 @@ async function collectAgency(agency, mesConfig, dryRun = false) {
               console.log(`\n      [DRY-RUN] Seria gravado no Notion:`);
               console.log(`        Cliente: ${client.id} | Mês: ${mesConfig.label}`);
               console.log(`        Post ID: ${post.id} | Tipo: ${post.media_type}`);
-              console.log(`        Curtidas: ${insights.like_count ?? '-'} | Comentários: ${insights.comments_count ?? '-'} | Alcance: ${insights.reach ?? '-'}`);
+              console.log(`        Curtidas: ${post.like_count ?? insights.likes ?? '-'} | Comentários: ${post.comments_count ?? insights.comments ?? '-'} | Alcance: ${insights.reach ?? '-'}`);
               console.log(`        Seguidores: ${followersCount}`);
               created++;
             } else {
@@ -266,7 +266,7 @@ async function collectAgency(agency, mesConfig, dryRun = false) {
           console.log(`\n      [DRY-RUN] Seria gravado no Notion:`);
           console.log(`        Cliente: ${client.id} | Mês: ${mesConfig.label}`);
           console.log(`        Post ID: ${post.id} | Tipo: ${post.media_type}`);
-          console.log(`        Curtidas: ${insights.like_count ?? '-'} | Comentários: ${insights.comments_count ?? '-'} | Alcance: ${insights.reach ?? '-'}`);
+          console.log(`        Curtidas: ${post.like_count ?? insights.likes ?? '-'} | Comentários: ${post.comments_count ?? insights.comments ?? '-'} | Alcance: ${insights.reach ?? '-'}`);
           console.log(`        Seguidores: ${followersCount}`);
           created++;
         } else {

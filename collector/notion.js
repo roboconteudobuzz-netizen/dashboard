@@ -83,8 +83,10 @@ function buildProperties(post, clientId, mes) {
   const ins = post.insights || {};
   if (ins.reach         != null) props['Alcance']              = { number: ins.reach };
   if (ins.impressions   != null) props['Impressões']           = { number: ins.impressions };
-  if (ins.likes         != null) props['Curtidas']             = { number: ins.likes };
-  if (ins.comments      != null) props['Comentários']          = { number: ins.comments };
+  const curtidas = ins.likes ?? post.like_count;
+  const comentarios = ins.comments ?? post.comments_count;
+  if (curtidas   != null) props['Curtidas']    = { number: curtidas };
+  if (comentarios != null) props['Comentários'] = { number: comentarios };
   if (ins.shares        != null) props['Compartilhamentos']    = { number: ins.shares };
   if (ins.saved         != null) props['Salvamentos']          = { number: ins.saved };
   if (ins.plays != null || ins.video_views != null) {

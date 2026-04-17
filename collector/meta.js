@@ -66,7 +66,7 @@ async function getPostsByMonth(igAccountId, accessToken, year, month) {
   let posts = [];
   let url = `${igAccountId}/media`;
   let params = {
-    fields: 'id,timestamp,media_type,permalink,thumbnail_url,media_url,caption',
+    fields: 'id,timestamp,media_type,permalink,thumbnail_url,media_url,caption,like_count,comments_count',
     since: sinceTs,
     until: untilTs,
     limit: 50,
@@ -82,7 +82,7 @@ async function getPostsByMonth(igAccountId, accessToken, year, month) {
     if (data.paging?.cursors?.after && data.paging?.next) {
       url = `${igAccountId}/media`;
       params = {
-        fields: 'id,timestamp,media_type,permalink,thumbnail_url,media_url,caption',
+        fields: 'id,timestamp,media_type,permalink,thumbnail_url,media_url,caption,like_count,comments_count',
         since: sinceTs,
         until: untilTs,
         limit: 50,
