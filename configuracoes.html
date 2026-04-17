@@ -255,10 +255,32 @@
         <div id="mapping-alert"></div>
       </div>
 
-      <div style="margin-top:16px">
+      <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <a href="/auth/reconnect" class="btn btn-outline" style="font-size:13px;height:38px">
           <i class='bx bx-refresh'></i> Reconectar / buscar novas páginas
         </a>
+        <button class="btn btn-outline" style="font-size:13px;height:38px" onclick="openSyncModal()">
+          <i class='bx bx-cloud-download'></i> Sincronizar dados agora
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal de sincronização -->
+    <div id="sync-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center">
+      <div style="background:#fff;border-radius:16px;padding:32px;width:360px;box-shadow:0 8px 32px rgba(0,0,0,.15)">
+        <div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:8px">Sincronizar dados</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Escolha o mês que deseja sincronizar com o Notion.</div>
+        <div class="form-row">
+          <label>Mês</label>
+          <select id="sync-mes"></select>
+        </div>
+        <div id="sync-alert"></div>
+        <div style="display:flex;gap:10px;margin-top:20px">
+          <button class="btn" id="btn-sync-confirm" onclick="confirmSync()">
+            <i class='bx bx-cloud-download'></i> Sincronizar
+          </button>
+          <button class="btn btn-outline" onclick="closeSyncModal()">Cancelar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -448,6 +470,60 @@
       await loadPages();
     } catch (e) {
       alert('Erro: ' + e.message);
+    }
+  }
+
+  // ── Sincronização manual ──
+  function buildMesOptions() {
+    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const now = new Date();
+    const select = document.getElementById('sync-mes');
+    select.innerHTML = '';
+    // Últimos 6 meses (incluindo o atual)
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const label = `${meses[d.getMonth()]} ${d.getFullYear()}`;
+      const opt = document.createElement('option');
+      opt.value = label;
+      opt.textContent = label;
+      select.appendChild(opt);
+    }
+  }
+
+  function openSyncModal() {
+    buildMesOptions();
+    document.getElementById('sync-alert').innerHTML = '';
+    document.getElementById('sync-modal').style.display = 'flex';
+  }
+
+  function closeSyncModal() {
+    document.getElementById('sync-modal').style.display = 'none';
+  }
+
+  async function confirmSync() {
+    const mes = document.getElementById('sync-mes').value;
+    const btn = document.getElementById('btn-sync-confirm');
+    const alertEl = document.getElementById('sync-alert');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Iniciando...';
+    alertEl.innerHTML = '';
+
+    try {
+      const res = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mes }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao iniciar sincronização');
+      alertEl.innerHTML = `<div class="alert alert-success"><i class="bx bx-check"></i> Sincronização de <strong>${escapeHtml(data.mes)}</strong> iniciada! Os dados aparecerão no Notion em alguns minutos.</div>`;
+      btn.style.display = 'none';
+    } catch (e) {
+      alertEl.innerHTML = `<div class="alert alert-error">${escapeHtml(e.message)}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bx bx-cloud-download"></i> Sincronizar';
     }
   }
 

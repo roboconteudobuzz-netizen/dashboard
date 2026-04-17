@@ -446,6 +446,40 @@ const server = http.createServer(async (req, res) => {
       }));
     }
 
+    // POST /api/sync — dispara coleta manual para uma agência
+    if (req.method === 'POST' && url.pathname === '/api/sync') {
+      const agency = await getSessionAgency(req);
+      if (!agency) { res.writeHead(401); return res.end(JSON.stringify({ error: 'unauthorized' })); }
+
+      const body = JSON.parse(await readBody(req));
+      const mes = body.mes || (() => {
+        const now = new Date();
+        const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+        return `${meses[now.getMonth()]} ${now.getFullYear()}`;
+      })();
+
+      // Disparar o collector em background (não bloqueia a resposta)
+      const { spawn } = require('child_process');
+      const collectorPath = require('path').join(__dirname, 'collector', 'collector.js');
+      const proc = spawn(process.execPath, [
+        collectorPath,
+        '--mes', mes,
+        '--agencia', agency.facebook_user_id,
+      ], {
+        env: { ...process.env },
+        detached: true,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+
+      proc.stdout.on('data', d => console.log(`[sync ${agency.facebook_user_id}] ${d.toString().trim()}`));
+      proc.stderr.on('data', d => console.error(`[sync ${agency.facebook_user_id}] ${d.toString().trim()}`));
+      proc.on('close', code => console.log(`[sync ${agency.facebook_user_id}] finalizado com código ${code}`));
+      proc.unref();
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: true, mes }));
+    }
+
     // DELETE /api/agency/pages/:pageId — desvincula uma página
     if (req.method === 'POST' && url.pathname === '/api/agency/unlink') {
       const agency = await getSessionAgency(req);

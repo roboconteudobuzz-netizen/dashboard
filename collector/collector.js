@@ -13,11 +13,14 @@ const notion = require('./notion');
 const path   = require('path');
 
 // ── Carregar agências ──
-async function loadAgencies() {
+async function loadAgencies(facebookUserIdFilter = null) {
   // Modo banco de dados (Railway com OAuth configurado)
   if (process.env.DATABASE_URL) {
     const db = require(path.join(__dirname, '..', 'db'));
-    const clients = await db.getAllClients();
+    const clients = facebookUserIdFilter
+      ? await db.getClientsByAgency(facebookUserIdFilter)
+      : await db.getAllClients();
+
     if (clients.length) {
       console.log(`   📋 ${clients.length} cliente(s) carregado(s) do banco`);
       // Agrupar por notion_database_id (uma "agência" por database)
@@ -26,7 +29,7 @@ async function loadAgencies() {
         const key = c.notion_database_id;
         if (!agencyMap[key]) {
           agencyMap[key] = {
-            id: key,
+            id: c.facebook_user_id || key,
             name: 'Agência',
             notionToken: c.notion_token,
             notionDatabaseId: c.notion_database_id,
@@ -298,10 +301,8 @@ async function main() {
   }
 
   // Carregar e filtrar agências
-  const agencies = await loadAgencies();
-  const targets = agenciaArg
-    ? agencies.filter(a => a.id === agenciaArg)
-    : agencies;
+  const agencies = await loadAgencies(agenciaArg || null);
+  const targets = agencies;
 
   if (!targets.length) {
     console.error(`❌ Nenhuma agência encontrada${agenciaArg ? ` com id "${agenciaArg}"` : ''}`);
