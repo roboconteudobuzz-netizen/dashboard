@@ -17,47 +17,45 @@ async function loadAgencies(facebookUserIdFilter = null) {
   // Modo banco de dados (Railway com OAuth configurado)
   if (process.env.DATABASE_URL) {
     try {
-      // Diagnóstico: testar conexão diretamente
       const { Client } = require('pg');
       const pgClient = new Client({
         connectionString: process.env.DATABASE_URL,
         ssl: { rejectUnauthorized: false },
       });
       await pgClient.connect();
-      const testResult = await pgClient.query('SELECT COUNT(*) as total FROM clients');
-      console.log(`   🔎 Diagnóstico direto — clientes no banco: ${testResult.rows[0].total}`);
+
+      const query = facebookUserIdFilter
+        ? 'SELECT * FROM clients WHERE facebook_user_id = $1 ORDER BY page_name'
+        : 'SELECT * FROM clients ORDER BY page_name';
+      const params = facebookUserIdFilter ? [facebookUserIdFilter] : [];
+      const result = await pgClient.query(query, params);
       await pgClient.end();
 
-      const db = require(path.join(__dirname, '..', 'db'));
-      const clients = facebookUserIdFilter
-        ? await db.getClientsByAgency(facebookUserIdFilter)
-        : await db.getAllClients();
-
-      console.log(`   🔎 Via db.getAllClients(): ${clients.length}`);
-
-    if (clients.length) {
+      const clients = result.rows;
       console.log(`   📋 ${clients.length} cliente(s) carregado(s) do banco`);
-      // Agrupar por notion_database_id (uma "agência" por database)
-      const agencyMap = {};
-      for (const c of clients) {
-        const key = c.notion_database_id;
-        if (!agencyMap[key]) {
-          agencyMap[key] = {
-            id: c.facebook_user_id || key,
-            name: 'Agência',
-            notionToken: c.notion_token,
-            notionDatabaseId: c.notion_database_id,
-            clients: [],
-          };
+
+      if (clients.length) {
+        // Agrupar por notion_database_id (uma "agência" por database)
+        const agencyMap = {};
+        for (const c of clients) {
+          const key = c.notion_database_id;
+          if (!agencyMap[key]) {
+            agencyMap[key] = {
+              id: c.facebook_user_id || key,
+              name: 'Agência',
+              notionToken: c.notion_token,
+              notionDatabaseId: c.notion_database_id,
+              clients: [],
+            };
+          }
+          agencyMap[key].clients.push({
+            id: c.notion_client_id,
+            metaAccessToken: c.access_token,
+            instagramAccountId: c.instagram_account_id,
+          });
         }
-        agencyMap[key].clients.push({
-          id: c.notion_client_id,
-          metaAccessToken: c.access_token,
-          instagramAccountId: c.instagram_account_id,
-        });
+        return Object.values(agencyMap);
       }
-      return Object.values(agencyMap);
-    }
     } catch (e) {
       console.error(`   ❌ Erro ao conectar no banco: ${e.message}`);
     }
