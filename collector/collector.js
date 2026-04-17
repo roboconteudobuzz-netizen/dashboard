@@ -16,10 +16,13 @@ const path   = require('path');
 async function loadAgencies(facebookUserIdFilter = null) {
   // Modo banco de dados (Railway com OAuth configurado)
   if (process.env.DATABASE_URL) {
-    const db = require(path.join(__dirname, '..', 'db'));
-    const clients = facebookUserIdFilter
-      ? await db.getClientsByAgency(facebookUserIdFilter)
-      : await db.getAllClients();
+    try {
+      const db = require(path.join(__dirname, '..', 'db'));
+      const clients = facebookUserIdFilter
+        ? await db.getClientsByAgency(facebookUserIdFilter)
+        : await db.getAllClients();
+
+      console.log(`   🔎 Clientes encontrados no banco: ${clients.length}`);
 
     if (clients.length) {
       console.log(`   📋 ${clients.length} cliente(s) carregado(s) do banco`);
@@ -43,6 +46,9 @@ async function loadAgencies(facebookUserIdFilter = null) {
         });
       }
       return Object.values(agencyMap);
+    }
+    } catch (e) {
+      console.error(`   ❌ Erro ao conectar no banco: ${e.message}`);
     }
   }
 
