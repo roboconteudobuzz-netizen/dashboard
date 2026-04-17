@@ -150,7 +150,7 @@ async function collectClient(client, agency, mesConfig) {
 }
 
 // ── Coletar dados de uma agência ──
-async function collectAgency(agency, mesConfig) {
+async function collectAgency(agency, mesConfig, dryRun = false) {
   console.log(`\n📦 Agência: ${agency.name}`);
   console.log(`   Mês: ${mesConfig.label}`);
 
@@ -179,8 +179,17 @@ async function collectAgency(agency, mesConfig) {
           try {
             const insights = await meta.getPostInsights(post.id, post.media_type, pageAccessToken);
             const enriched = { ...post, insights, followersCount, ...demographics };
-            const result = await notion.upsertPost(agency.notionDatabaseId, agency.notionToken, enriched, client.id, mesConfig.label);
-            if (result.action === 'created') created++; else updated++;
+            if (dryRun) {
+              console.log(`\n      [DRY-RUN] Seria gravado no Notion:`);
+              console.log(`        Cliente: ${client.id} | Mês: ${mesConfig.label}`);
+              console.log(`        Post ID: ${post.id} | Tipo: ${post.media_type}`);
+              console.log(`        Curtidas: ${insights.like_count ?? '-'} | Comentários: ${insights.comments_count ?? '-'} | Alcance: ${insights.reach ?? '-'}`);
+              console.log(`        Seguidores: ${followersCount}`);
+              created++;
+            } else {
+              const result = await notion.upsertPost(agency.notionDatabaseId, agency.notionToken, enriched, client.id, mesConfig.label);
+              if (result.action === 'created') created++; else updated++;
+            }
             console.log('✅');
           } catch (e) { console.log(`❌ ${e.message}`); errors++; }
           await new Promise(r => setTimeout(r, 300));
@@ -235,15 +244,24 @@ async function collectAgency(agency, mesConfig) {
 
       // Para cada cliente da agência no Notion
       for (const client of agency.clients) {
-        const result = await notion.upsertPost(
-          agency.notionDatabaseId,
-          agency.notionToken,
-          enriched,
-          client.id,
-          mesConfig.label,
-        );
-        if (result.action === 'created') created++;
-        else updated++;
+        if (dryRun) {
+          console.log(`\n      [DRY-RUN] Seria gravado no Notion:`);
+          console.log(`        Cliente: ${client.id} | Mês: ${mesConfig.label}`);
+          console.log(`        Post ID: ${post.id} | Tipo: ${post.media_type}`);
+          console.log(`        Curtidas: ${insights.like_count ?? '-'} | Comentários: ${insights.comments_count ?? '-'} | Alcance: ${insights.reach ?? '-'}`);
+          console.log(`        Seguidores: ${followersCount}`);
+          created++;
+        } else {
+          const result = await notion.upsertPost(
+            agency.notionDatabaseId,
+            agency.notionToken,
+            enriched,
+            client.id,
+            mesConfig.label,
+          );
+          if (result.action === 'created') created++;
+          else updated++;
+        }
       }
       console.log('✅');
     } catch (e) {
@@ -265,6 +283,11 @@ async function main() {
   // Parsear argumentos
   const mesArg     = args[args.indexOf('--mes') + 1];
   const agenciaArg = args[args.indexOf('--agencia') + 1];
+  const dryRun     = args.includes('--dry-run');
+
+  if (dryRun) {
+    console.log('🧪 MODO DRY-RUN — nenhum dado será gravado no Notion\n');
+  }
 
   const mesStr = mesArg || getMesAnterior();
   const mesConfig = parseMes(mesStr);
@@ -290,7 +313,7 @@ async function main() {
 
   for (const agency of targets) {
     try {
-      await collectAgency(agency, mesConfig);
+      await collectAgency(agency, mesConfig, dryRun);
     } catch (e) {
       console.error(`\n❌ Erro na agência ${agency.name}: ${e.message}`);
     }
