@@ -17,12 +17,23 @@ async function loadAgencies(facebookUserIdFilter = null) {
   // Modo banco de dados (Railway com OAuth configurado)
   if (process.env.DATABASE_URL) {
     try {
+      // Diagnóstico: testar conexão diretamente
+      const { Client } = require('pg');
+      const pgClient = new Client({
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false },
+      });
+      await pgClient.connect();
+      const testResult = await pgClient.query('SELECT COUNT(*) as total FROM clients');
+      console.log(`   🔎 Diagnóstico direto — clientes no banco: ${testResult.rows[0].total}`);
+      await pgClient.end();
+
       const db = require(path.join(__dirname, '..', 'db'));
       const clients = facebookUserIdFilter
         ? await db.getClientsByAgency(facebookUserIdFilter)
         : await db.getAllClients();
 
-      console.log(`   🔎 Clientes encontrados no banco: ${clients.length}`);
+      console.log(`   🔎 Via db.getAllClients(): ${clients.length}`);
 
     if (clients.length) {
       console.log(`   📋 ${clients.length} cliente(s) carregado(s) do banco`);
