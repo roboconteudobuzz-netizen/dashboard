@@ -421,12 +421,13 @@ const server = http.createServer(async (req, res) => {
       const agency = await getSessionAgency(req);
       if (!agency) { res.writeHead(401); return res.end(JSON.stringify({ error: 'unauthorized' })); }
 
-      // Páginas ainda não mapeadas (pendentes do OAuth)
-      const pending = await db.getPendingByAgency(agency.facebook_user_id);
-      const pendingPages = pending?.pages || [];
-
       // Páginas já mapeadas
       const mapped = await db.getClientsByAgency(agency.facebook_user_id);
+      const mappedPageIds = new Set(mapped.map(c => c.page_id));
+
+      // Páginas pendentes — filtra as que já foram mapeadas
+      const pending = await db.getPendingByAgency(agency.facebook_user_id);
+      const pendingPages = (pending?.pages || []).filter(p => !mappedPageIds.has(p.pageId));
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({
