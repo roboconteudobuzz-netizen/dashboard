@@ -43,17 +43,47 @@ function notionRequest(method, path, token, body = null) {
   });
 }
 
+// ── Descobrir o nome exato da propriedade URL no banco ──
+const urlPropCache = {};
+async function getUrlPropertyName(databaseId, token) {
+  if (urlPropCache[databaseId]) return urlPropCache[databaseId];
+  const schema = await notionRequest('GET', `databases/${databaseId}`, token);
+  const candidates = ['Link do post', 'Link do Post', 'link do post', 'URL', 'url', 'Permalink', 'Link'];
+  for (const name of candidates) {
+    if (schema.properties?.[name]?.type === 'url') {
+      urlPropCache[databaseId] = name;
+      console.log(`   🔗 Propriedade URL encontrada: "${name}"`);
+      return name;
+    }
+  }
+  // Fallback: primeira propriedade do tipo url encontrada
+  for (const [name, prop] of Object.entries(schema.properties || {})) {
+    if (prop.type === 'url') {
+      urlPropCache[databaseId] = name;
+      console.log(`   🔗 Propriedade URL encontrada: "${name}"`);
+      return name;
+    }
+  }
+  return null;
+}
+
 // ── Verificar se um post já existe no Notion (pelo Link do post) ──
 async function findExistingPost(databaseId, token, permalink) {
-  const data = await notionRequest('POST', `databases/${databaseId}/query`, token, {
-    filter: { property: 'Link do post', url: { equals: permalink } },
-    page_size: 1,
-  });
-  return data.results?.[0] ?? null;
+  const urlProp = await getUrlPropertyName(databaseId, token);
+  if (!urlProp || !permalink) return null;
+  try {
+    const data = await notionRequest('POST', `databases/${databaseId}/query`, token, {
+      filter: { property: urlProp, url: { equals: permalink } },
+      page_size: 1,
+    });
+    return data.results?.[0] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 // ── Montar propriedades para o Notion ──
-function buildProperties(post, clientId, mes) {
+function buildProperties(post, clientId, mes, urlPropName = 'Link do post') {
   const props = {};
 
   // Título (legenda resumida)
@@ -71,7 +101,7 @@ function buildProperties(post, clientId, mes) {
   props['Tipo de conteúdo'] = { select: { name: tipo } };
 
   // URL e datas
-  if (post.permalink) props['Link do post'] = { url: post.permalink };
+  if (post.permalink) props[urlPropName] = { url: post.permalink };
   if (post.timestamp) props['Data da coleta'] = { date: { start: new Date().toISOString().split('T')[0] } };
   if (post.timestamp) props['Horário publicação'] = { date: { start: post.timestamp } };
 
@@ -108,8 +138,8 @@ function buildProperties(post, clientId, mes) {
 }
 
 // ── Criar página no Notion ──
-async function createPost(databaseId, token, post, clientId, mes) {
-  const properties = buildProperties(post, clientId, mes);
+async function createPost(databaseId, token, post, clientId, mes, urlPropName) {
+  const properties = buildProperties(post, clientId, mes, urlPropName);
   return notionRequest('POST', 'pages', token, {
     parent: { database_id: databaseId },
     properties,
@@ -117,23 +147,22 @@ async function createPost(databaseId, token, post, clientId, mes) {
 }
 
 // ── Atualizar página existente no Notion ──
-async function updatePost(pageId, token, post, clientId, mes) {
-  const properties = buildProperties(post, clientId, mes);
+async function updatePost(pageId, token, post, clientId, mes, urlPropName) {
+  const properties = buildProperties(post, clientId, mes, urlPropName);
   return notionRequest('PATCH', `pages/${pageId}`, token, { properties });
 }
 
 // ── Upsert: cria ou atualiza ──
 async function upsertPost(databaseId, token, post, clientId, mes) {
-  if (!post.permalink) {
-    console.warn('  ⚠️  Post sem permalink, pulando...');
-    return;
-  }
-  const existing = await findExistingPost(databaseId, token, post.permalink);
+  const urlPropName = await getUrlPropertyName(databaseId, token);
+  const existing = urlPropName && post.permalink
+    ? await findExistingPost(databaseId, token, post.permalink)
+    : null;
   if (existing) {
-    await updatePost(existing.id, token, post, clientId, mes);
+    await updatePost(existing.id, token, post, clientId, mes, urlPropName);
     return { action: 'updated', id: existing.id };
   } else {
-    const created = await createPost(databaseId, token, post, clientId, mes);
+    const created = await createPost(databaseId, token, post, clientId, mes, urlPropName);
     return { action: 'created', id: created.id };
   }
 }
