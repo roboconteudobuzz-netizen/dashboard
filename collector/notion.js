@@ -43,10 +43,17 @@ function notionRequest(method, path, token, body = null) {
   });
 }
 
+// ── Normalizar permalink (remove parâmetros de rastreamento) ──
+function normalizePermalink(url) {
+  if (!url) return url;
+  return url.split('?')[0];
+}
+
 // ── Verificar se um post já existe no Notion (pelo Link do post) ──
 async function findExistingPost(databaseId, token, permalink) {
+  const normalized = normalizePermalink(permalink);
   const data = await notionRequest('POST', `databases/${databaseId}/query`, token, {
-    filter: { property: 'Link do post', url: { equals: permalink } },
+    filter: { property: 'Link do post', url: { equals: normalized } },
     page_size: 1,
   });
   return data.results?.[0] ?? null;
@@ -58,20 +65,19 @@ function buildProperties(post, clientId, mes) {
 
   // Título (legenda resumida)
   const titulo = (post.caption || post.permalink || '—').substring(0, 100);
-  props['Conteúdo (métrica)'] = { title: [{ text: { content: titulo } }] };
+  props['Nome da postagem'] = { title: [{ text: { content: titulo } }] };
 
   // Selects
-  props['ID CLIENTE']     = { select: { name: clientId } };
-  props['Plataforma']     = { select: { name: 'Instagram' } };
+  props['ID Cliente']     = { select: { name: clientId } };
   props['Mês postagem']   = { select: { name: mes } };
 
-  // Tipo de conteúdo
+  // Formato (tipo de conteúdo)
   const tipoMap = { IMAGE: 'Foto', VIDEO: 'Reels', CAROUSEL_ALBUM: 'Carrossel', REELS: 'Reels' };
   const tipo = tipoMap[post.media_type] || 'Foto';
-  props['Tipo de conteúdo'] = { select: { name: tipo } };
+  props['Formato'] = { select: { name: tipo } };
 
   // URL e datas
-  if (post.permalink) props['Link do post'] = { url: post.permalink };
+  if (post.permalink) props['Link do post'] = { url: normalizePermalink(post.permalink) };
   if (post.timestamp) props['Data da coleta'] = { date: { start: new Date().toISOString().split('T')[0] } };
   if (post.timestamp) props['Horário publicação'] = { date: { start: post.timestamp } };
 
@@ -81,7 +87,7 @@ function buildProperties(post, clientId, mes) {
 
   // Métricas numéricas
   const ins = post.insights || {};
-  if (ins.reach         != null) props['Alcance']              = { number: ins.reach };
+  if (ins.reach         != null) props['Alcance Geral']        = { number: ins.reach };
   if (ins.impressions   != null) props['Impressões']           = { number: ins.impressions };
   const curtidas = ins.likes ?? post.like_count;
   const comentarios = ins.comments ?? post.comments_count;
@@ -90,10 +96,7 @@ function buildProperties(post, clientId, mes) {
   if (ins.shares        != null) props['Compartilhamentos']    = { number: ins.shares };
   if (ins.saved         != null) props['Salvamentos']          = { number: ins.saved };
   if (ins.plays != null || ins.video_views != null) {
-    props['Views'] = { number: ins.plays ?? ins.video_views ?? 0 };
-  }
-  if (ins.total_interactions != null) {
-    props['Engajamento total'] = { number: ins.total_interactions };
+    props['Visualizações (Views)'] = { number: ins.plays ?? ins.video_views ?? 0 };
   }
 
   // Seguidores
